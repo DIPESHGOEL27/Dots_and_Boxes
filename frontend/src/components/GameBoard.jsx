@@ -31,7 +31,9 @@ function GameBoard({
       return;
     }
     // Online mode
-    let socket = io("http://localhost:4000");
+    let socket = io(
+      process.env.REACT_APP_BACKEND_URL || "http://localhost:4000"
+    );
     socketRef.current = socket;
     setWaiting(true);
     setGameStarted(false);
