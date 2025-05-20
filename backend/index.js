@@ -8,7 +8,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "https://dots-and-boxes-xi.vercel.app/",
     methods: ["GET", "POST"],
   },
 });
@@ -167,6 +167,7 @@ function isBoxComplete(x, y, lines) {
   );
 }
 
-server.listen(4000, () => {
-  console.log("Backend running on http://localhost:4000");
+const PORT = process.env.PORT || 4000;
+server.listen(PORT, () => {
+  console.log(`Backend running on http://localhost:${PORT}`);
 });
