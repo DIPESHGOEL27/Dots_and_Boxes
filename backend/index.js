@@ -5,18 +5,20 @@ const cors = require("cors");
 const { v4: uuidv4 } = require("uuid");
 
 const app = express();
+const allowedOrigins = [
+  "http://localhost:3000", // for local dev
+  "https://dots-and-boxes-xi.vercel.app", // Vercel URL, no trailing slash
+];
+
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "https://dots-and-boxes-xi.vercel.app/",
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 
-const allowedOrigins = [
-  "http://localhost:3000", // for local dev
-  "https://dots-and-boxes-xi.vercel.app/", // replace with your actual Vercel URL
-];
 app.use(
   cors({
     origin: allowedOrigins,
