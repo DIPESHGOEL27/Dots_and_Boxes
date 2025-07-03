@@ -80,9 +80,18 @@ Backend (Node.js + Socket.io Server)
 
 ## 📱 Screenshots
 
+**Dashboard**
+
 ![Dashboard](Dashboard.png)
+
 ![Dashboard_online](Dashboard_2.png)
+
+**Waiting Room**
+
 ![Waiting_Room](Waiting_Room.png)
+
+**Game**
+
 ![Game](Game.png)
 
 ## 🚀 Deployment
