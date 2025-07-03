@@ -26,6 +26,47 @@ app.use(
   })
 );
 
+// Add a simple route for the root endpoint
+app.get("/", (req, res) => {
+  res.send(`
+    <html>
+      <head>
+        <title>Dots & Boxes Backend</title>
+        <style>
+          body { 
+            font-family: Arial, sans-serif; 
+            background: #1a1a1a; 
+            color: #fff; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0;
+          }
+          .container { 
+            text-align: center; 
+            padding: 2rem; 
+            border: 2px solid #4CAF50; 
+            border-radius: 10px; 
+            background: #2a2a2a;
+          }
+          h1 { color: #4CAF50; margin-bottom: 1rem; }
+          p { margin: 0.5rem 0; }
+          .status { color: #4CAF50; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>🎮 Dots & Boxes Backend</h1>
+          <p class="status">Backend is running successfully! ✅</p>
+          <p>Ready to handle multiplayer game connections</p>
+          <p>Socket.io server is active and waiting for players</p>
+        </div>
+      </body>
+    </html>
+  `);
+});
+
 const gameRooms = new Map();
 
 io.on("connection", (socket) => {
