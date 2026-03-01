@@ -3,10 +3,11 @@
 // Handles connect, disconnect, reconnection, and cleanup.
 // ============================================================
 
-import { useEffect, useRef, useState } from 'react';
-import io, { Socket } from 'socket.io-client';
+import { useEffect, useRef, useState } from "react";
+import io, { Socket } from "socket.io-client";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:4000';
+const BACKEND_URL =
+  process.env.REACT_APP_BACKEND_URL || "http://localhost:4000";
 
 interface UseSocketReturn {
   socket: Socket | null;
@@ -32,21 +33,21 @@ export function useSocket(enabled: boolean = true): UseSocketReturn {
 
     socketRef.current = socket;
 
-    socket.on('connect', () => {
+    socket.on("connect", () => {
       setIsConnected(true);
       setConnectionError(null);
     });
 
-    socket.on('disconnect', () => {
+    socket.on("disconnect", () => {
       setIsConnected(false);
     });
 
-    socket.on('connect_error', (err) => {
+    socket.on("connect_error", (err) => {
       setConnectionError(`Connection failed: ${err.message}`);
       setIsConnected(false);
     });
 
-    socket.on('serverShutdown', ({ message }: { message: string }) => {
+    socket.on("serverShutdown", ({ message }: { message: string }) => {
       setConnectionError(message);
     });
 

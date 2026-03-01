@@ -3,11 +3,11 @@
 // Per-socket event rate limiting using a sliding window.
 // ============================================================
 
-import logger from '../utils/logger';
+import logger from "../utils/logger";
 import {
   RATE_LIMIT_MOVES_PER_SECOND,
   RATE_LIMIT_ROOMS_PER_MINUTE,
-} from 'dots-and-boxes-shared';
+} from "dots-and-boxes-shared";
 
 interface RateBucket {
   timestamps: number[];
@@ -17,7 +17,12 @@ interface RateBucket {
 
 const socketBuckets = new Map<string, Map<string, RateBucket>>();
 
-function getBucket(socketId: string, event: string, maxEvents: number, windowMs: number): RateBucket {
+function getBucket(
+  socketId: string,
+  event: string,
+  maxEvents: number,
+  windowMs: number,
+): RateBucket {
   if (!socketBuckets.has(socketId)) {
     socketBuckets.set(socketId, new Map());
   }
@@ -37,11 +42,11 @@ export function checkRateLimit(socketId: string, event: string): boolean {
   let windowMs: number;
 
   switch (event) {
-    case 'makeMove':
+    case "makeMove":
       maxEvents = RATE_LIMIT_MOVES_PER_SECOND;
       windowMs = 1000;
       break;
-    case 'createRoom':
+    case "createRoom":
       maxEvents = RATE_LIMIT_ROOMS_PER_MINUTE;
       windowMs = 60000;
       break;
@@ -53,10 +58,15 @@ export function checkRateLimit(socketId: string, event: string): boolean {
   const now = Date.now();
 
   // Remove timestamps outside the window
-  bucket.timestamps = bucket.timestamps.filter(t => now - t < bucket.windowMs);
+  bucket.timestamps = bucket.timestamps.filter(
+    (t) => now - t < bucket.windowMs,
+  );
 
   if (bucket.timestamps.length >= bucket.maxEvents) {
-    logger.warn({ socketId, event, count: bucket.timestamps.length }, 'Rate limit exceeded');
+    logger.warn(
+      { socketId, event, count: bucket.timestamps.length },
+      "Rate limit exceeded",
+    );
     return false;
   }
 
@@ -70,5 +80,3 @@ export function checkRateLimit(socketId: string, event: string): boolean {
 export function cleanupRateLimit(socketId: string): void {
   socketBuckets.delete(socketId);
 }
-
-

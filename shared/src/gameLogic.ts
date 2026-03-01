@@ -4,8 +4,13 @@
 // All line coordinates are normalized (smaller point first).
 // ============================================================
 
-import { GameState, Line, LineKey, BoxKey, PlayerIndex } from './types';
-import { MIN_GRID_SIZE, MAX_GRID_SIZE, MIN_PLAYERS, MAX_PLAYERS } from './constants';
+import { GameState, Line, LineKey, BoxKey, PlayerIndex } from "./types";
+import {
+  MIN_GRID_SIZE,
+  MAX_GRID_SIZE,
+  MIN_PLAYERS,
+  MAX_PLAYERS,
+} from "./constants";
 
 // ─── Line Normalization ──────────────────────────────────────
 
@@ -47,8 +52,13 @@ export function isValidLine(line: Line, gridSize: number): boolean {
   const [x1, y1, x2, y2] = line;
 
   // Must be integers
-  if (!Number.isInteger(x1) || !Number.isInteger(y1) ||
-      !Number.isInteger(x2) || !Number.isInteger(y2)) return false;
+  if (
+    !Number.isInteger(x1) ||
+    !Number.isInteger(y1) ||
+    !Number.isInteger(x2) ||
+    !Number.isInteger(y2)
+  )
+    return false;
 
   // Must be within grid bounds
   if (x1 < 0 || x1 >= gridSize || y1 < 0 || y1 >= gridSize) return false;
@@ -66,14 +76,20 @@ export function isValidLine(line: Line, gridSize: number): boolean {
  * Validate grid size is within allowed bounds.
  */
 export function isValidGridSize(gridSize: number): boolean {
-  return Number.isInteger(gridSize) && gridSize >= MIN_GRID_SIZE && gridSize <= MAX_GRID_SIZE;
+  return (
+    Number.isInteger(gridSize) &&
+    gridSize >= MIN_GRID_SIZE &&
+    gridSize <= MAX_GRID_SIZE
+  );
 }
 
 /**
  * Validate player count is within allowed bounds.
  */
 export function isValidPlayerCount(count: number): boolean {
-  return Number.isInteger(count) && count >= MIN_PLAYERS && count <= MAX_PLAYERS;
+  return (
+    Number.isInteger(count) && count >= MIN_PLAYERS && count <= MAX_PLAYERS
+  );
 }
 
 // ─── Line Set Operations ─────────────────────────────────────
@@ -81,7 +97,10 @@ export function isValidPlayerCount(count: number): boolean {
 /**
  * Check if a line already exists in the line set.
  */
-export function isLineTaken(lineSet: Set<LineKey> | string[], line: Line): boolean {
+export function isLineTaken(
+  lineSet: Set<LineKey> | string[],
+  line: Line,
+): boolean {
   const key = lineToKey(line);
   if (lineSet instanceof Set) {
     return lineSet.has(key);
@@ -95,7 +114,11 @@ export function isLineTaken(lineSet: Set<LineKey> | string[], line: Line): boole
  * Check if all 4 sides of the box at position (x, y) are present.
  * Uses a Set for O(1) lookups.
  */
-export function isBoxComplete(x: number, y: number, lineSet: Set<LineKey>): boolean {
+export function isBoxComplete(
+  x: number,
+  y: number,
+  lineSet: Set<LineKey>,
+): boolean {
   // Top edge
   const top = lineToKey([x, y, x + 1, y]);
   // Bottom edge
@@ -105,14 +128,23 @@ export function isBoxComplete(x: number, y: number, lineSet: Set<LineKey>): bool
   // Right edge
   const right = lineToKey([x + 1, y, x + 1, y + 1]);
 
-  return lineSet.has(top) && lineSet.has(bottom) && lineSet.has(left) && lineSet.has(right);
+  return (
+    lineSet.has(top) &&
+    lineSet.has(bottom) &&
+    lineSet.has(left) &&
+    lineSet.has(right)
+  );
 }
 
 /**
  * After placing a line, find all boxes that were completed by this move.
  * Returns array of box keys ("x,y") for newly completed boxes.
  */
-export function findCompletedBoxes(line: Line, gridSize: number, lineSet: Set<LineKey>): BoxKey[] {
+export function findCompletedBoxes(
+  line: Line,
+  gridSize: number,
+  lineSet: Set<LineKey>,
+): BoxKey[] {
   const [x1, y1, x2, y2] = normalizeLine(line);
   const completedBoxes: BoxKey[] = [];
 
@@ -153,7 +185,10 @@ export function findCompletedBoxes(line: Line, gridSize: number, lineSet: Set<Li
 /**
  * Create a fresh game state for the given grid size and player count.
  */
-export function createInitialState(gridSize: number, maxPlayers: number): GameState {
+export function createInitialState(
+  gridSize: number,
+  maxPlayers: number,
+): GameState {
   return {
     gridSize,
     lines: [],
@@ -189,7 +224,7 @@ export function isGameOver(state: GameState): boolean {
  */
 export function determineWinner(scores: number[]): PlayerIndex | null {
   const max = Math.max(...scores);
-  const winners = scores.filter(s => s === max);
+  const winners = scores.filter((s) => s === max);
   if (winners.length > 1) return null; // draw
   return scores.indexOf(max);
 }
@@ -200,7 +235,11 @@ export function determineWinner(scores: number[]): PlayerIndex | null {
  *
  * @returns New game state, or null if the move is invalid.
  */
-export function applyMove(state: GameState, line: Line, playerIndex: PlayerIndex): GameState | null {
+export function applyMove(
+  state: GameState,
+  line: Line,
+  playerIndex: PlayerIndex,
+): GameState | null {
   // Validate the move
   if (!isValidLine(line, state.gridSize)) return null;
   if (state.gameOver) return null;
@@ -219,7 +258,11 @@ export function applyMove(state: GameState, line: Line, playerIndex: PlayerIndex
   lineSetAsSet.add(key);
 
   // Check for completed boxes
-  const completedBoxes = findCompletedBoxes(normalized, state.gridSize, lineSetAsSet);
+  const completedBoxes = findCompletedBoxes(
+    normalized,
+    state.gridSize,
+    lineSetAsSet,
+  );
   const newBoxes = { ...state.boxes };
   const newScores = [...state.scores];
   let boxCompleted = false;
@@ -288,11 +331,15 @@ export function getAvailableLines(state: GameState): Line[] {
 /**
  * Count how many sides of the box at (x, y) are drawn.
  */
-export function countBoxSides(x: number, y: number, lineSet: Set<LineKey>): number {
+export function countBoxSides(
+  x: number,
+  y: number,
+  lineSet: Set<LineKey>,
+): number {
   let count = 0;
-  if (lineSet.has(lineToKey([x, y, x + 1, y]))) count++;       // top
+  if (lineSet.has(lineToKey([x, y, x + 1, y]))) count++; // top
   if (lineSet.has(lineToKey([x, y + 1, x + 1, y + 1]))) count++; // bottom
-  if (lineSet.has(lineToKey([x, y, x, y + 1]))) count++;       // left
+  if (lineSet.has(lineToKey([x, y, x, y + 1]))) count++; // left
   if (lineSet.has(lineToKey([x + 1, y, x + 1, y + 1]))) count++; // right
   return count;
 }

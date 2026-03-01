@@ -3,8 +3,8 @@
 // Features player customization, grid size, and mode selection.
 // ============================================================
 
-import React, { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   GRID_OPTIONS,
   PLAYER_COLORS,
@@ -12,30 +12,30 @@ import {
   PLAYER_AVATARS,
   AI_DIFFICULTIES,
   AIDifficulty,
-} from 'dots-and-boxes-shared';
-import { isMuted, toggleMute } from '../utils/sounds';
-import '../App.css';
+} from "dots-and-boxes-shared";
+import { isMuted, toggleMute } from "../utils/sounds";
+import "../App.css";
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
 
   // Player customization
   const [playerName, setPlayerName] = useState(
-    () => localStorage.getItem('dots-boxes-name') || DEFAULT_PLAYER_NAMES[0],
+    () => localStorage.getItem("dots-boxes-name") || DEFAULT_PLAYER_NAMES[0],
   );
   const [playerColor, setPlayerColor] = useState(
-    () => localStorage.getItem('dots-boxes-color') || PLAYER_COLORS[0],
+    () => localStorage.getItem("dots-boxes-color") || PLAYER_COLORS[0],
   );
   const [playerAvatar, setPlayerAvatar] = useState(
-    () => localStorage.getItem('dots-boxes-avatar') || PLAYER_AVATARS[0],
+    () => localStorage.getItem("dots-boxes-avatar") || PLAYER_AVATARS[0],
   );
 
   // Game settings
   const [gridSize, setGridSize] = useState(4);
-  const [mode, setMode] = useState<'local' | 'ai' | 'online'>('local');
+  const [mode, setMode] = useState<"local" | "ai" | "online">("local");
   const [localPlayers, setLocalPlayers] = useState(2);
-  const [aiDifficulty, setAiDifficulty] = useState<AIDifficulty>('medium');
-  const [joinRoomId, setJoinRoomId] = useState('');
+  const [aiDifficulty, setAiDifficulty] = useState<AIDifficulty>("medium");
+  const [joinRoomId, setJoinRoomId] = useState("");
   const [muted, setMuted] = useState(isMuted());
 
   const handleToggleMute = useCallback(() => {
@@ -44,9 +44,9 @@ const Home: React.FC = () => {
   }, []);
 
   const savePlayerPrefs = useCallback(() => {
-    localStorage.setItem('dots-boxes-name', playerName);
-    localStorage.setItem('dots-boxes-color', playerColor);
-    localStorage.setItem('dots-boxes-avatar', playerAvatar);
+    localStorage.setItem("dots-boxes-name", playerName);
+    localStorage.setItem("dots-boxes-color", playerColor);
+    localStorage.setItem("dots-boxes-avatar", playerAvatar);
   }, [playerName, playerColor, playerAvatar]);
 
   const handleStart = useCallback(() => {
@@ -54,21 +54,21 @@ const Home: React.FC = () => {
 
     const params = new URLSearchParams({
       gridSize: String(gridSize),
-      playerCount: String(mode === 'local' ? localPlayers : 2),
+      playerCount: String(mode === "local" ? localPlayers : 2),
       playerName,
       playerColor,
       playerAvatar,
     });
 
     switch (mode) {
-      case 'local':
+      case "local":
         navigate(`/game/local?${params.toString()}`);
         break;
-      case 'ai':
-        params.set('difficulty', aiDifficulty);
+      case "ai":
+        params.set("difficulty", aiDifficulty);
         navigate(`/game/ai?${params.toString()}`);
         break;
-      case 'online':
+      case "online":
         if (joinRoomId.trim()) {
           navigate(`/game/online/${joinRoomId.trim()}?${params.toString()}`);
         } else {
@@ -76,7 +76,18 @@ const Home: React.FC = () => {
         }
         break;
     }
-  }, [mode, gridSize, localPlayers, aiDifficulty, joinRoomId, playerName, playerColor, playerAvatar, navigate, savePlayerPrefs]);
+  }, [
+    mode,
+    gridSize,
+    localPlayers,
+    aiDifficulty,
+    joinRoomId,
+    playerName,
+    playerColor,
+    playerAvatar,
+    navigate,
+    savePlayerPrefs,
+  ]);
 
   return (
     <div className="app-root">
@@ -86,10 +97,10 @@ const Home: React.FC = () => {
           <button
             className="mute-btn"
             onClick={handleToggleMute}
-            title={muted ? 'Unmute sounds' : 'Mute sounds'}
-            aria-label={muted ? 'Unmute sounds' : 'Mute sounds'}
+            title={muted ? "Unmute sounds" : "Mute sounds"}
+            aria-label={muted ? "Unmute sounds" : "Mute sounds"}
           >
-            {muted ? '🔇' : '🔊'}
+            {muted ? "🔇" : "🔊"}
           </button>
         </div>
 
@@ -115,7 +126,7 @@ const Home: React.FC = () => {
                 {PLAYER_AVATARS.map((av) => (
                   <button
                     key={av}
-                    className={`avatar-option ${playerAvatar === av ? 'selected' : ''}`}
+                    className={`avatar-option ${playerAvatar === av ? "selected" : ""}`}
                     onClick={() => setPlayerAvatar(av)}
                     aria-label={`Select avatar ${av}`}
                   >
@@ -126,17 +137,17 @@ const Home: React.FC = () => {
             </div>
             <div className="inline-group">
               <label>Color:</label>
-            <div className="color-picker">
-              {PLAYER_COLORS.map((c) => (
-                <button
-                  key={c}
-                  className={`color-option ${playerColor === c ? 'selected' : ''}`}
-                  style={{ background: c }}
-                  onClick={() => setPlayerColor(c)}
-                  aria-label={`Select color ${c}`}
-                />
-              ))}
-            </div>
+              <div className="color-picker">
+                {PLAYER_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    className={`color-option ${playerColor === c ? "selected" : ""}`}
+                    style={{ background: c }}
+                    onClick={() => setPlayerColor(c)}
+                    aria-label={`Select color ${c}`}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </fieldset>
@@ -164,27 +175,27 @@ const Home: React.FC = () => {
             <label htmlFor="mode">Mode:</label>
             <div className="mode-picker">
               <button
-                className={`mode-btn ${mode === 'local' ? 'active' : ''}`}
-                onClick={() => setMode('local')}
+                className={`mode-btn ${mode === "local" ? "active" : ""}`}
+                onClick={() => setMode("local")}
               >
                 👥 Local
               </button>
               <button
-                className={`mode-btn ${mode === 'ai' ? 'active' : ''}`}
-                onClick={() => setMode('ai')}
+                className={`mode-btn ${mode === "ai" ? "active" : ""}`}
+                onClick={() => setMode("ai")}
               >
                 🤖 vs AI
               </button>
               <button
-                className={`mode-btn ${mode === 'online' ? 'active' : ''}`}
-                onClick={() => setMode('online')}
+                className={`mode-btn ${mode === "online" ? "active" : ""}`}
+                onClick={() => setMode("online")}
               >
                 🌐 Online
               </button>
             </div>
           </div>
 
-          {mode === 'local' && (
+          {mode === "local" && (
             <div className="lobby-section">
               <label htmlFor="player-count">Players:</label>
               <select
@@ -201,26 +212,26 @@ const Home: React.FC = () => {
             </div>
           )}
 
-          {mode === 'ai' && (
+          {mode === "ai" && (
             <div className="lobby-section">
               <label htmlFor="ai-difficulty">AI Difficulty:</label>
               <div className="difficulty-picker">
                 {AI_DIFFICULTIES.map((d) => (
                   <button
                     key={d}
-                    className={`difficulty-btn ${aiDifficulty === d ? 'active' : ''}`}
+                    className={`difficulty-btn ${aiDifficulty === d ? "active" : ""}`}
                     onClick={() => setAiDifficulty(d)}
                   >
-                    {d === 'easy' && '😊 Easy'}
-                    {d === 'medium' && '🧠 Medium'}
-                    {d === 'hard' && '💀 Hard'}
+                    {d === "easy" && "😊 Easy"}
+                    {d === "medium" && "🧠 Medium"}
+                    {d === "hard" && "💀 Hard"}
                   </button>
                 ))}
               </div>
             </div>
           )}
 
-          {mode === 'online' && (
+          {mode === "online" && (
             <div className="lobby-section">
               <label htmlFor="room-id">Room ID (leave blank to create):</label>
               <input

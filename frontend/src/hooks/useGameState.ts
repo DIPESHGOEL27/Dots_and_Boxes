@@ -3,7 +3,7 @@
 // Uses shared game logic for move application.
 // ============================================================
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from "react";
 import {
   GameState,
   Line,
@@ -11,7 +11,7 @@ import {
   createInitialState,
   applyMove,
   normalizeLine,
-} from 'dots-and-boxes-shared';
+} from "dots-and-boxes-shared";
 
 interface UseGameStateReturn {
   state: GameState;
@@ -20,22 +20,31 @@ interface UseGameStateReturn {
   resetGame: (gridSize: number, playerCount: number) => void;
 }
 
-export function useGameState(gridSize: number, playerCount: number): UseGameStateReturn {
+export function useGameState(
+  gridSize: number,
+  playerCount: number,
+): UseGameStateReturn {
   const [state, setState] = useState<GameState>(() =>
-    createInitialState(gridSize, playerCount)
+    createInitialState(gridSize, playerCount),
   );
 
-  const makeLocalMove = useCallback((line: Line, playerIndex: PlayerIndex): boolean => {
-    const normalized = normalizeLine(line);
-    const newState = applyMove(state, normalized, playerIndex);
-    if (!newState) return false;
-    setState(newState);
-    return true;
-  }, [state]);
+  const makeLocalMove = useCallback(
+    (line: Line, playerIndex: PlayerIndex): boolean => {
+      const normalized = normalizeLine(line);
+      const newState = applyMove(state, normalized, playerIndex);
+      if (!newState) return false;
+      setState(newState);
+      return true;
+    },
+    [state],
+  );
 
-  const resetGame = useCallback((newGridSize: number, newPlayerCount: number) => {
-    setState(createInitialState(newGridSize, newPlayerCount));
-  }, []);
+  const resetGame = useCallback(
+    (newGridSize: number, newPlayerCount: number) => {
+      setState(createInitialState(newGridSize, newPlayerCount));
+    },
+    [],
+  );
 
   return { state, setState, makeLocalMove, resetGame };
 }

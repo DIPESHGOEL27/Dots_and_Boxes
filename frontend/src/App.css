@@ -171,7 +171,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: border-color 0.2s, transform 0.15s;
+  transition:
+    border-color 0.2s,
+    transform 0.15s;
 }
 
 .avatar-option:hover {
@@ -197,7 +199,9 @@ body {
   border-radius: 50%;
   border: 3px solid transparent;
   cursor: pointer;
-  transition: border-color 0.2s, transform 0.15s;
+  transition:
+    border-color 0.2s,
+    transform 0.15s;
 }
 
 .color-option:hover {
@@ -283,7 +287,9 @@ body {
   cursor: pointer;
   margin-top: 0.2rem;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-  transition: transform 0.15s, box-shadow 0.2s;
+  transition:
+    transform 0.15s,
+    box-shadow 0.2s;
 }
 
 .start-btn:hover {

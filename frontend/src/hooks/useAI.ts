@@ -3,7 +3,7 @@
 // Runs client-side with a delay to simulate thinking.
 // ============================================================
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from "react";
 import {
   GameState,
   Line,
@@ -15,7 +15,7 @@ import {
   countBoxSides,
   findCompletedBoxes,
   AI_MOVE_DELAY_MS,
-} from 'dots-and-boxes-shared';
+} from "dots-and-boxes-shared";
 
 // ─── AI Strategy Functions ───────────────────────────────────
 
@@ -104,7 +104,14 @@ function hardAI(state: GameState, aiPlayerIndex: number): Line | null {
     const newState = applyMove(state, normalizeLine(line), state.currentPlayer);
     if (!newState) continue;
 
-    const score = minimax(newState, maxDepth - 1, -Infinity, Infinity, false, aiPlayerIndex);
+    const score = minimax(
+      newState,
+      maxDepth - 1,
+      -Infinity,
+      Infinity,
+      false,
+      aiPlayerIndex,
+    );
     if (score > bestScore) {
       bestScore = score;
       bestMove = line;
@@ -120,31 +127,48 @@ function minimax(
   alpha: number,
   beta: number,
   isMaximizing: boolean,
-  aiPlayerIndex: number
+  aiPlayerIndex: number,
 ): number {
   if (depth === 0 || state.gameOver) {
     // Evaluate: score differential from AI's perspective
     const aiScore = state.scores[aiPlayerIndex];
-    const opponentScore = state.scores.reduce((sum, s, i) => i !== aiPlayerIndex ? sum + s : sum, 0);
+    const opponentScore = state.scores.reduce(
+      (sum, s, i) => (i !== aiPlayerIndex ? sum + s : sum),
+      0,
+    );
     return aiScore - opponentScore;
   }
 
   const available = getAvailableLines(state);
   if (available.length === 0) {
     const aiScore = state.scores[aiPlayerIndex];
-    const opponentScore = state.scores.reduce((sum, s, i) => i !== aiPlayerIndex ? sum + s : sum, 0);
+    const opponentScore = state.scores.reduce(
+      (sum, s, i) => (i !== aiPlayerIndex ? sum + s : sum),
+      0,
+    );
     return aiScore - opponentScore;
   }
 
   if (isMaximizing || state.currentPlayer === aiPlayerIndex) {
     let maxEval = -Infinity;
     for (const line of available) {
-      const newState = applyMove(state, normalizeLine(line), state.currentPlayer);
+      const newState = applyMove(
+        state,
+        normalizeLine(line),
+        state.currentPlayer,
+      );
       if (!newState) continue;
 
       // If current player stays the same (completed a box), stay maximizing/minimizing
       const nextIsMax = newState.currentPlayer === aiPlayerIndex;
-      const eval_ = minimax(newState, depth - 1, alpha, beta, nextIsMax, aiPlayerIndex);
+      const eval_ = minimax(
+        newState,
+        depth - 1,
+        alpha,
+        beta,
+        nextIsMax,
+        aiPlayerIndex,
+      );
       maxEval = Math.max(maxEval, eval_);
       alpha = Math.max(alpha, eval_);
       if (beta <= alpha) break;
@@ -153,11 +177,22 @@ function minimax(
   } else {
     let minEval = Infinity;
     for (const line of available) {
-      const newState = applyMove(state, normalizeLine(line), state.currentPlayer);
+      const newState = applyMove(
+        state,
+        normalizeLine(line),
+        state.currentPlayer,
+      );
       if (!newState) continue;
 
       const nextIsMax = newState.currentPlayer === aiPlayerIndex;
-      const eval_ = minimax(newState, depth - 1, alpha, beta, nextIsMax, aiPlayerIndex);
+      const eval_ = minimax(
+        newState,
+        depth - 1,
+        alpha,
+        beta,
+        nextIsMax,
+        aiPlayerIndex,
+      );
       minEval = Math.min(minEval, eval_);
       beta = Math.min(beta, eval_);
       if (beta <= alpha) break;
@@ -176,20 +211,26 @@ interface UseAIOptions {
   onMove: (line: Line) => void;
 }
 
-export function useAI({ enabled, difficulty, aiPlayerIndex, state, onMove }: UseAIOptions): void {
+export function useAI({
+  enabled,
+  difficulty,
+  aiPlayerIndex,
+  state,
+  onMove,
+}: UseAIOptions): void {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const computeMove = useCallback(() => {
     let move: Line | null = null;
 
     switch (difficulty) {
-      case 'easy':
+      case "easy":
         move = easyAI(state);
         break;
-      case 'medium':
+      case "medium":
         move = mediumAI(state);
         break;
-      case 'hard':
+      case "hard":
         move = hardAI(state, aiPlayerIndex);
         break;
     }
@@ -213,5 +254,12 @@ export function useAI({ enabled, difficulty, aiPlayerIndex, state, onMove }: Use
         clearTimeout(timerRef.current);
       }
     };
-  }, [enabled, state.currentPlayer, state.gameOver, state.started, aiPlayerIndex, computeMove]);
+  }, [
+    enabled,
+    state.currentPlayer,
+    state.gameOver,
+    state.started,
+    aiPlayerIndex,
+    computeMove,
+  ]);
 }

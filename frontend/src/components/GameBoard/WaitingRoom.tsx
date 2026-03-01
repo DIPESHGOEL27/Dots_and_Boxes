@@ -2,10 +2,10 @@
 // WaitingRoom — Pre-game lobby for online multiplayer
 // ============================================================
 
-import React, { useCallback } from 'react';
-import toast from 'react-hot-toast';
-import { PlayerInfo } from 'dots-and-boxes-shared';
-import './GameBoard.css';
+import React, { useCallback } from "react";
+import toast from "react-hot-toast";
+import { PlayerInfo } from "dots-and-boxes-shared";
+import "./GameBoard.css";
 
 interface WaitingRoomProps {
   roomId: string;
@@ -29,25 +29,35 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
   const shareableUrl = `${window.location.origin}/game/online/${roomId}`;
 
   const copyLink = useCallback(() => {
-    navigator.clipboard.writeText(shareableUrl).then(() => {
-      toast.success('Room link copied to clipboard!');
-    }).catch(() => {
-      toast.error('Failed to copy link');
-    });
+    navigator.clipboard
+      .writeText(shareableUrl)
+      .then(() => {
+        toast.success("Room link copied to clipboard!");
+      })
+      .catch(() => {
+        toast.error("Failed to copy link");
+      });
   }, [shareableUrl]);
 
   const copyRoomId = useCallback(() => {
-    navigator.clipboard.writeText(roomId).then(() => {
-      toast.success('Room ID copied!');
-    }).catch(() => {
-      toast.error('Failed to copy');
-    });
+    navigator.clipboard
+      .writeText(roomId)
+      .then(() => {
+        toast.success("Room ID copied!");
+      })
+      .catch(() => {
+        toast.error("Failed to copy");
+      });
   }, [roomId]);
 
   return (
     <div className="game-root">
       <div className="game-header">
-        <button className="back-btn" onClick={onBack} aria-label="Back to lobby">
+        <button
+          className="back-btn"
+          onClick={onBack}
+          aria-label="Back to lobby"
+        >
           &larr; Back
         </button>
       </div>
@@ -55,9 +65,14 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
         <h2>Waiting for players...</h2>
 
         <div className="room-id-section">
-          <div className="room-id" style={{ marginBottom: '0.5rem' }}>
+          <div className="room-id" style={{ marginBottom: "0.5rem" }}>
             Room ID: <b>{roomId}</b>
-            <button className="copy-btn" onClick={copyRoomId} title="Copy Room ID" aria-label="Copy room ID">
+            <button
+              className="copy-btn"
+              onClick={copyRoomId}
+              title="Copy Room ID"
+              aria-label="Copy room ID"
+            >
               📋
             </button>
           </div>
@@ -74,8 +89,8 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
           {Array.from({ length: maxPlayers }).map((_, i) => (
             <li
               key={i}
-              className={`player-slot ${players[i] ? 'joined' : 'empty'}`}
-              style={{ borderLeftColor: colors[i] || '#555' }}
+              className={`player-slot ${players[i] ? "joined" : "empty"}`}
+              style={{ borderLeftColor: colors[i] || "#555" }}
             >
               {players[i] ? (
                 <>
@@ -98,7 +113,9 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
         )}
 
         {!isCreator && (
-          <p className="waiting-hint">Waiting for the room creator to start the game...</p>
+          <p className="waiting-hint">
+            Waiting for the room creator to start the game...
+          </p>
         )}
       </div>
     </div>

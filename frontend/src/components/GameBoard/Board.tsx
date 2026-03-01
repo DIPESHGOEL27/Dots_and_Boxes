@@ -3,15 +3,15 @@
 // Renders dots, lines, and boxes using shared constants.
 // ============================================================
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from "react";
 import {
   GameState,
   Line,
   normalizeLine,
   isSameLine,
   DOT_SPACING,
-} from 'dots-and-boxes-shared';
-import './GameBoard.css';
+} from "dots-and-boxes-shared";
+import "./GameBoard.css";
 
 interface BoardProps {
   state: GameState;
@@ -73,7 +73,10 @@ const Board: React.FC<BoardProps> = ({
           <div
             key={`dot-${x}-${y}`}
             className="dot"
-            style={{ left: `${x * DOT_SPACING}px`, top: `${y * DOT_SPACING}px` }}
+            style={{
+              left: `${x * DOT_SPACING}px`,
+              top: `${y * DOT_SPACING}px`,
+            }}
           />,
         );
       }
@@ -97,23 +100,27 @@ const Board: React.FC<BoardProps> = ({
           <div
             key={`hline-${x}-${y}`}
             className={[
-              'line',
-              'hline',
-              taken ? 'taken' : '',
-              clickable ? 'clickable' : '',
-              isNew ? 'line-new' : '',
+              "line",
+              "hline",
+              taken ? "taken" : "",
+              clickable ? "clickable" : "",
+              isNew ? "line-new" : "",
             ]
               .filter(Boolean)
-              .join(' ')}
+              .join(" ")}
             style={{
               left: `${x * DOT_SPACING + 6}px`,
               top: `${y * DOT_SPACING - 4}px`,
-              background: taken ? '#888' : undefined,
+              background: taken ? "#888" : undefined,
             }}
             onClick={clickable ? () => onLineClick(line) : undefined}
-            role={clickable ? 'button' : undefined}
+            role={clickable ? "button" : undefined}
             tabIndex={clickable ? 0 : undefined}
-            aria-label={clickable ? `Draw line from (${x},${y}) to (${x + 1},${y})` : undefined}
+            aria-label={
+              clickable
+                ? `Draw line from (${x},${y}) to (${x + 1},${y})`
+                : undefined
+            }
           />,
         );
       }
@@ -131,23 +138,27 @@ const Board: React.FC<BoardProps> = ({
           <div
             key={`vline-${x}-${y}`}
             className={[
-              'line',
-              'vline',
-              taken ? 'taken' : '',
-              clickable ? 'clickable' : '',
-              isNew ? 'line-new' : '',
+              "line",
+              "vline",
+              taken ? "taken" : "",
+              clickable ? "clickable" : "",
+              isNew ? "line-new" : "",
             ]
               .filter(Boolean)
-              .join(' ')}
+              .join(" ")}
             style={{
               left: `${x * DOT_SPACING - 4}px`,
               top: `${y * DOT_SPACING + 6}px`,
-              background: taken ? '#888' : undefined,
+              background: taken ? "#888" : undefined,
             }}
             onClick={clickable ? () => onLineClick(line) : undefined}
-            role={clickable ? 'button' : undefined}
+            role={clickable ? "button" : undefined}
             tabIndex={clickable ? 0 : undefined}
-            aria-label={clickable ? `Draw line from (${x},${y}) to (${x},${y + 1})` : undefined}
+            aria-label={
+              clickable
+                ? `Draw line from (${x},${y}) to (${x},${y + 1})`
+                : undefined
+            }
           />,
         );
       }
@@ -169,23 +180,23 @@ const Board: React.FC<BoardProps> = ({
           <div
             key={`box-${key}`}
             className={[
-              'box',
-              owner !== undefined ? 'box-filled' : '',
-              isNewBox ? 'box-new' : '',
+              "box",
+              owner !== undefined ? "box-filled" : "",
+              isNewBox ? "box-new" : "",
             ]
               .filter(Boolean)
-              .join(' ')}
+              .join(" ")}
             style={{
               left: `${x * DOT_SPACING + 4}px`,
               top: `${y * DOT_SPACING + 4}px`,
               background:
                 owner !== undefined
-                  ? (colors[owner] || '#888') + '44'
-                  : 'transparent',
+                  ? (colors[owner] || "#888") + "44"
+                  : "transparent",
               border:
                 owner !== undefined
-                  ? `2px solid ${colors[owner] || '#888'}`
-                  : '2px solid transparent',
+                  ? `2px solid ${colors[owner] || "#888"}`
+                  : "2px solid transparent",
             }}
           />,
         );
@@ -204,10 +215,10 @@ const Board: React.FC<BoardProps> = ({
         style={{
           width: `${gridPixelSize}px`,
           height: `${gridPixelSize}px`,
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
         }}
       >
         {boxElements}

@@ -16,23 +16,27 @@ A production-grade implementation of the classic **Dots and Boxes** strategy gam
 ## ✨ Features
 
 ### 🎲 Game Modes
-| Mode | Description |
-|------|-------------|
-| 👥 **Local Multiplayer** | 2–4 players on the same device, hot-seat style |
-| 🤖 **vs AI** | Play against AI with **Easy**, **Medium**, or **Hard** difficulty |
-| 🌐 **Online Multiplayer** | Real-time rooms via Socket.io with shareable invite links |
+
+| Mode                      | Description                                                       |
+| ------------------------- | ----------------------------------------------------------------- |
+| 👥 **Local Multiplayer**  | 2–4 players on the same device, hot-seat style                    |
+| 🤖 **vs AI**              | Play against AI with **Easy**, **Medium**, or **Hard** difficulty |
+| 🌐 **Online Multiplayer** | Real-time rooms via Socket.io with shareable invite links         |
 
 ### 🤖 AI Opponent
+
 - **Easy** — Random move selection
 - **Medium** — Greedy strategy: completes boxes, avoids giving away 3-sided boxes
 - **Hard** — Minimax with alpha-beta pruning (depth 6, full search for ≤12 remaining moves)
 
 ### 🎨 Player Customization
+
 - Custom player names (persisted in localStorage)
 - 4 color presets
 - 12 avatar emojis
 
 ### 🏆 Game Features
+
 - 3×3 to 10×10 grid sizes
 - Automatic box completion detection & scoring
 - Turn indicator with active player glow animation
@@ -91,16 +95,16 @@ dots_and_boxes/
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| **Language** | TypeScript (strict mode, end-to-end) |
-| **Frontend** | React 19, React Router v6, react-hot-toast, canvas-confetti |
-| **Backend** | Node.js, Express 4, Socket.io 4.8 |
-| **Shared** | Monorepo shared package (`dots-and-boxes-shared`) |
-| **Testing** | Jest, React Testing Library (86+ tests across packages) |
-| **CI/CD** | GitHub Actions (Node 18 & 20 matrix) |
-| **Logging** | pino (structured JSON logging) |
-| **Deployment** | Vercel (frontend) + Render (backend) |
+| Layer          | Technology                                                  |
+| -------------- | ----------------------------------------------------------- |
+| **Language**   | TypeScript (strict mode, end-to-end)                        |
+| **Frontend**   | React 19, React Router v6, react-hot-toast, canvas-confetti |
+| **Backend**    | Node.js, Express 4, Socket.io 4.8                           |
+| **Shared**     | Monorepo shared package (`dots-and-boxes-shared`)           |
+| **Testing**    | Jest, React Testing Library (86+ tests across packages)     |
+| **CI/CD**      | GitHub Actions (Node 18 & 20 matrix)                        |
+| **Logging**    | pino (structured JSON logging)                              |
+| **Deployment** | Vercel (frontend) + Render (backend)                        |
 
 ## 🔒 Security & Reliability
 
@@ -114,6 +118,7 @@ dots_and_boxes/
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - Node.js ≥ 18
 - npm
 
@@ -165,6 +170,7 @@ cd ../frontend && npx react-scripts build
 ## 📡 API
 
 ### Health Check
+
 ```
 GET /health
 → { status: "ok", uptime: 1234.5, rooms: 3, timestamp: "..." }
@@ -172,19 +178,19 @@ GET /health
 
 ### Socket.io Events
 
-| Direction | Event | Payload |
-|-----------|-------|---------|
-| C→S | `createRoom` | `{ gridSize, maxPlayers, playerInfo }` |
-| C→S | `joinRoom` | `{ roomId, playerInfo }` |
-| C→S | `startGame` | `{ roomId }` |
-| C→S | `makeMove` | `{ roomId, line: [x1,y1,x2,y2] }` |
-| S→C | `roomCreated` | `{ roomId }` |
-| S→C | `waitingForPlayers` | `{ players, maxPlayers, creator }` |
-| S→C | `startGame` | `{ state }` |
-| S→C | `updateGame` | `{ state }` |
-| S→C | `gameOver` | `{ state, winner, winnerName, isDraw }` |
-| S→C | `playerDisconnected` | `{ playerInfo, playerIndex, reconnectTimeout }` |
-| S→C | `playerReconnected` | `{ playerInfo, playerIndex }` |
+| Direction | Event                | Payload                                         |
+| --------- | -------------------- | ----------------------------------------------- |
+| C→S       | `createRoom`         | `{ gridSize, maxPlayers, playerInfo }`          |
+| C→S       | `joinRoom`           | `{ roomId, playerInfo }`                        |
+| C→S       | `startGame`          | `{ roomId }`                                    |
+| C→S       | `makeMove`           | `{ roomId, line: [x1,y1,x2,y2] }`               |
+| S→C       | `roomCreated`        | `{ roomId }`                                    |
+| S→C       | `waitingForPlayers`  | `{ players, maxPlayers, creator }`              |
+| S→C       | `startGame`          | `{ state }`                                     |
+| S→C       | `updateGame`         | `{ state }`                                     |
+| S→C       | `gameOver`           | `{ state, winner, winnerName, isDraw }`         |
+| S→C       | `playerDisconnected` | `{ playerInfo, playerIndex, reconnectTimeout }` |
+| S→C       | `playerReconnected`  | `{ playerInfo, playerIndex }`                   |
 
 ## 📄 License
 

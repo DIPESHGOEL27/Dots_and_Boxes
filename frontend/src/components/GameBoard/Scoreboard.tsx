@@ -2,9 +2,9 @@
 // Scoreboard — Displays player scores and turn indicator
 // ============================================================
 
-import React from 'react';
-import { PlayerInfo } from 'dots-and-boxes-shared';
-import './GameBoard.css';
+import React from "react";
+import { PlayerInfo } from "dots-and-boxes-shared";
+import "./GameBoard.css";
 
 interface ScoreboardProps {
   players: PlayerInfo[];
@@ -13,14 +13,19 @@ interface ScoreboardProps {
   colors: string[];
 }
 
-const Scoreboard: React.FC<ScoreboardProps> = ({ players, scores, currentPlayer, colors }) => {
+const Scoreboard: React.FC<ScoreboardProps> = ({
+  players,
+  scores,
+  currentPlayer,
+  colors,
+}) => {
   return (
     <div className="scores-block">
       {players.map((player, idx) => (
         <div key={player.id || idx} className="score-row">
           <span className="score-avatar">{player.avatar}</span>
           <span
-            className={`score-name ${currentPlayer === idx ? 'active' : ''}`}
+            className={`score-name ${currentPlayer === idx ? "active" : ""}`}
             style={{ color: colors[idx] || player.color }}
           >
             {player.name}

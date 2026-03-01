@@ -2,21 +2,21 @@
 // Scoreboard tests
 // ============================================================
 
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import Scoreboard from '../components/GameBoard/Scoreboard';
-import { PlayerInfo } from 'dots-and-boxes-shared';
+import React from "react";
+import { render, screen } from "@testing-library/react";
+import Scoreboard from "../components/GameBoard/Scoreboard";
+import { PlayerInfo } from "dots-and-boxes-shared";
 
 const mockPlayers: PlayerInfo[] = [
-  { id: '1', name: 'Alice', color: '#00bcd4', avatar: '🎮' },
-  { id: '2', name: 'Bob', color: '#ff4081', avatar: '🎲' },
+  { id: "1", name: "Alice", color: "#00bcd4", avatar: "🎮" },
+  { id: "2", name: "Bob", color: "#ff4081", avatar: "🎲" },
 ];
 
 const mockScores = [3, 5];
-const mockColors = ['#00bcd4', '#ff4081'];
+const mockColors = ["#00bcd4", "#ff4081"];
 
-describe('Scoreboard', () => {
-  it('renders all player names', () => {
+describe("Scoreboard", () => {
+  it("renders all player names", () => {
     render(
       <Scoreboard
         players={mockPlayers}
@@ -26,11 +26,11 @@ describe('Scoreboard', () => {
       />,
     );
 
-    expect(screen.getByText('Alice')).toBeInTheDocument();
-    expect(screen.getByText('Bob')).toBeInTheDocument();
+    expect(screen.getByText("Alice")).toBeInTheDocument();
+    expect(screen.getByText("Bob")).toBeInTheDocument();
   });
 
-  it('renders all player scores', () => {
+  it("renders all player scores", () => {
     render(
       <Scoreboard
         players={mockPlayers}
@@ -40,11 +40,11 @@ describe('Scoreboard', () => {
       />,
     );
 
-    expect(screen.getByText('3')).toBeInTheDocument();
-    expect(screen.getByText('5')).toBeInTheDocument();
+    expect(screen.getByText("3")).toBeInTheDocument();
+    expect(screen.getByText("5")).toBeInTheDocument();
   });
 
-  it('renders player avatars', () => {
+  it("renders player avatars", () => {
     render(
       <Scoreboard
         players={mockPlayers}
@@ -54,11 +54,11 @@ describe('Scoreboard', () => {
       />,
     );
 
-    expect(screen.getByText('🎮')).toBeInTheDocument();
-    expect(screen.getByText('🎲')).toBeInTheDocument();
+    expect(screen.getByText("🎮")).toBeInTheDocument();
+    expect(screen.getByText("🎲")).toBeInTheDocument();
   });
 
-  it('highlights the active player', () => {
+  it("highlights the active player", () => {
     render(
       <Scoreboard
         players={mockPlayers}
@@ -68,14 +68,14 @@ describe('Scoreboard', () => {
       />,
     );
 
-    const aliceName = screen.getByText('Alice');
-    const bobName = screen.getByText('Bob');
+    const aliceName = screen.getByText("Alice");
+    const bobName = screen.getByText("Bob");
 
-    expect(aliceName.className).toContain('active');
-    expect(bobName.className).not.toContain('active');
+    expect(aliceName.className).toContain("active");
+    expect(bobName.className).not.toContain("active");
   });
 
-  it('updates active player when currentPlayer changes', () => {
+  it("updates active player when currentPlayer changes", () => {
     const { rerender } = render(
       <Scoreboard
         players={mockPlayers}
@@ -85,7 +85,7 @@ describe('Scoreboard', () => {
       />,
     );
 
-    const bobName = screen.getByText('Bob');
-    expect(bobName.className).toContain('active');
+    const bobName = screen.getByText("Bob");
+    expect(bobName.className).toContain("active");
   });
 });

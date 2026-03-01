@@ -24,13 +24,23 @@ export const DEFAULT_PLAYERS = 2;
 export const GRID_OPTIONS = [3, 4, 5, 6, 7, 8, 9, 10] as const;
 
 /** Player color presets */
-export const PLAYER_COLORS = ['#00bcd4', '#ff4081', '#ffc107', '#8bc34a'] as const;
+export const PLAYER_COLORS = [
+  "#00bcd4",
+  "#ff4081",
+  "#ffc107",
+  "#8bc34a",
+] as const;
 
 /** Default player names */
-export const DEFAULT_PLAYER_NAMES = ['Player 1', 'Player 2', 'Player 3', 'Player 4'] as const;
+export const DEFAULT_PLAYER_NAMES = [
+  "Player 1",
+  "Player 2",
+  "Player 3",
+  "Player 4",
+] as const;
 
 /** Available avatar emojis */
-export const PLAYER_AVATARS = ['�', '⚡', '🔥', '💎', '🚀', '🦊'] as const;
+export const PLAYER_AVATARS = ["�", "⚡", "🔥", "💎", "🚀", "🦊"] as const;
 
 /** Pixel spacing between dots on the game board */
 export const DOT_SPACING = 60;
@@ -60,5 +70,5 @@ export const RATE_LIMIT_ROOMS_PER_MINUTE = 2;
 export const AI_MOVE_DELAY_MS = 500;
 
 /** AI difficulty levels */
-export const AI_DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
-export type AIDifficulty = typeof AI_DIFFICULTIES[number];
+export const AI_DIFFICULTIES = ["easy", "medium", "hard"] as const;
+export type AIDifficulty = (typeof AI_DIFFICULTIES)[number];

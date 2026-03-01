@@ -4,23 +4,23 @@
 // CORS, health checks, and graceful shutdown.
 // ============================================================
 
-import express from 'express';
-import http from 'http';
-import { Server } from 'socket.io';
-import cors from 'cors';
-import logger from './utils/logger';
-import { registerHandlers } from './socket/handlers';
-import { roomManager } from './game/roomManager';
-import { RECONNECT_TIMEOUT_SECONDS } from 'dots-and-boxes-shared';
+import express from "express";
+import http from "http";
+import { Server } from "socket.io";
+import cors from "cors";
+import logger from "./utils/logger";
+import { registerHandlers } from "./socket/handlers";
+import { roomManager } from "./game/roomManager";
+import { RECONNECT_TIMEOUT_SECONDS } from "dots-and-boxes-shared";
 
 // ─── Configuration ───────────────────────────────────────────
 
 const allowedOrigins = [
-  'http://localhost:3000',
-  'https://dots-and-boxes-xi.vercel.app',
+  "http://localhost:3000",
+  "https://dots-and-boxes-xi.vercel.app",
 ];
 
-const PORT = parseInt(process.env.PORT || '4000', 10);
+const PORT = parseInt(process.env.PORT || "4000", 10);
 
 // ─── Express App ─────────────────────────────────────────────
 
@@ -31,9 +31,9 @@ app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
 
 // Health check endpoint
-app.get('/health', (_req, res) => {
+app.get("/health", (_req, res) => {
   res.json({
-    status: 'ok',
+    status: "ok",
     uptime: Math.floor(process.uptime()),
     rooms: roomManager.getRoomCount(),
     timestamp: new Date().toISOString(),
@@ -41,7 +41,7 @@ app.get('/health', (_req, res) => {
 });
 
 // Root endpoint
-app.get('/', (_req, res) => {
+app.get("/", (_req, res) => {
   res.send(`
     <!DOCTYPE html>
     <html lang="en">
@@ -95,14 +95,14 @@ app.get('/', (_req, res) => {
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
-    methods: ['GET', 'POST'],
+    methods: ["GET", "POST"],
     credentials: true,
   },
   pingInterval: 25000,
   pingTimeout: 20000,
 });
 
-io.on('connection', (socket) => {
+io.on("connection", (socket) => {
   registerHandlers(io, socket);
 });
 
@@ -113,7 +113,7 @@ setInterval(() => {
   for (const { roomId, playerIndex } of expired) {
     const room = roomManager.getRoom(roomId);
     if (room) {
-      io.to(roomId).emit('playerForfeited', {
+      io.to(roomId).emit("playerForfeited", {
         playerIndex,
         message: `Player ${playerIndex + 1} failed to reconnect within ${RECONNECT_TIMEOUT_SECONDS} seconds.`,
       });
@@ -124,37 +124,42 @@ setInterval(() => {
 // ─── Start Server ────────────────────────────────────────────
 
 server.listen(PORT, () => {
-  logger.info({ port: PORT, env: process.env.NODE_ENV || 'development' }, 'Server started');
+  logger.info(
+    { port: PORT, env: process.env.NODE_ENV || "development" },
+    "Server started",
+  );
 });
 
 // ─── Graceful Shutdown ───────────────────────────────────────
 
 function shutdown(signal: string): void {
-  logger.info({ signal }, 'Shutdown signal received');
+  logger.info({ signal }, "Shutdown signal received");
 
   // Notify all connected clients
-  io.emit('serverShutdown', { message: 'Server is restarting. Please refresh.' });
+  io.emit("serverShutdown", {
+    message: "Server is restarting. Please refresh.",
+  });
 
   // Close socket.io
   io.close(() => {
-    logger.info('Socket.io server closed');
+    logger.info("Socket.io server closed");
   });
 
   // Close HTTP server
   server.close(() => {
-    logger.info('HTTP server closed');
+    logger.info("HTTP server closed");
     roomManager.shutdown();
     process.exit(0);
   });
 
   // Force close after 10 seconds
   setTimeout(() => {
-    logger.error('Forced shutdown after timeout');
+    logger.error("Forced shutdown after timeout");
     process.exit(1);
   }, 10000);
 }
 
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
 
 export { app, server, io };

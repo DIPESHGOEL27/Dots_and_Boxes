@@ -29,7 +29,7 @@ export interface PlayerInfo {
 export interface GameState {
   gridSize: number;
   lines: Line[];
-  lineSet: string[];       // Serialized line keys for O(1) dedup
+  lineSet: string[]; // Serialized line keys for O(1) dedup
   boxes: Record<BoxKey, PlayerIndex>;
   scores: number[];
   currentPlayer: PlayerIndex;
@@ -43,8 +43,8 @@ export interface GameState {
 export interface Room {
   players: PlayerInfo[];
   state: GameState;
-  creator: string;           // socket id of room creator
-  createdAt: number;          // timestamp
+  creator: string; // socket id of room creator
+  createdAt: number; // timestamp
   disconnectedPlayers: Map<string, DisconnectedPlayer>;
 }
 
@@ -139,5 +139,10 @@ export interface ErrorEvent {
 /** Server → Client: invalid move */
 export interface InvalidMoveEvent {
   message: string;
-  reason: 'NOT_YOUR_TURN' | 'LINE_TAKEN' | 'INVALID_LINE' | 'GAME_NOT_STARTED' | 'GAME_OVER';
+  reason:
+    | "NOT_YOUR_TURN"
+    | "LINE_TAKEN"
+    | "INVALID_LINE"
+    | "GAME_NOT_STARTED"
+    | "GAME_OVER";
 }

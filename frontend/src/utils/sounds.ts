@@ -3,14 +3,16 @@
 // Generates procedural sounds (no external files needed).
 // ============================================================
 
-type SoundType = 'click' | 'boxComplete' | 'gameOver' | 'playerJoin' | 'error';
+type SoundType = "click" | "boxComplete" | "gameOver" | "playerJoin" | "error";
 
 let audioCtx: AudioContext | null = null;
-let _muted = localStorage.getItem('dots-boxes-muted') === 'true';
+let _muted = localStorage.getItem("dots-boxes-muted") === "true";
 
 function getContext(): AudioContext {
   if (!audioCtx) {
-    audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    audioCtx = new (
+      window.AudioContext || (window as any).webkitAudioContext
+    )();
   }
   return audioCtx;
 }
@@ -21,7 +23,7 @@ export function isMuted(): boolean {
 
 export function setMuted(muted: boolean): void {
   _muted = muted;
-  localStorage.setItem('dots-boxes-muted', String(muted));
+  localStorage.setItem("dots-boxes-muted", String(muted));
 }
 
 export function toggleMute(): boolean {
@@ -29,7 +31,12 @@ export function toggleMute(): boolean {
   return _muted;
 }
 
-function playTone(frequency: number, duration: number, type: OscillatorType = 'sine', volume: number = 0.15): void {
+function playTone(
+  frequency: number,
+  duration: number,
+  type: OscillatorType = "sine",
+  volume: number = 0.15,
+): void {
   if (_muted) return;
   try {
     const ctx = getContext();
@@ -52,29 +59,29 @@ function playTone(frequency: number, duration: number, type: OscillatorType = 's
 
 export function playSound(type: SoundType): void {
   switch (type) {
-    case 'click':
-      playTone(800, 0.08, 'sine', 0.1);
+    case "click":
+      playTone(800, 0.08, "sine", 0.1);
       break;
-    case 'boxComplete':
+    case "boxComplete":
       // Rising chime
-      playTone(523, 0.15, 'sine', 0.12);
-      setTimeout(() => playTone(659, 0.15, 'sine', 0.12), 80);
-      setTimeout(() => playTone(784, 0.25, 'sine', 0.12), 160);
+      playTone(523, 0.15, "sine", 0.12);
+      setTimeout(() => playTone(659, 0.15, "sine", 0.12), 80);
+      setTimeout(() => playTone(784, 0.25, "sine", 0.12), 160);
       break;
-    case 'gameOver':
+    case "gameOver":
       // Fanfare
-      playTone(523, 0.2, 'square', 0.08);
-      setTimeout(() => playTone(659, 0.2, 'square', 0.08), 150);
-      setTimeout(() => playTone(784, 0.2, 'square', 0.08), 300);
-      setTimeout(() => playTone(1047, 0.4, 'square', 0.1), 450);
+      playTone(523, 0.2, "square", 0.08);
+      setTimeout(() => playTone(659, 0.2, "square", 0.08), 150);
+      setTimeout(() => playTone(784, 0.2, "square", 0.08), 300);
+      setTimeout(() => playTone(1047, 0.4, "square", 0.1), 450);
       break;
-    case 'playerJoin':
-      playTone(600, 0.12, 'sine', 0.1);
-      setTimeout(() => playTone(800, 0.12, 'sine', 0.1), 100);
+    case "playerJoin":
+      playTone(600, 0.12, "sine", 0.1);
+      setTimeout(() => playTone(800, 0.12, "sine", 0.1), 100);
       break;
-    case 'error':
-      playTone(300, 0.15, 'square', 0.08);
-      setTimeout(() => playTone(200, 0.2, 'square', 0.08), 120);
+    case "error":
+      playTone(300, 0.15, "square", 0.08);
+      setTimeout(() => playTone(200, 0.2, "square", 0.08), 120);
       break;
   }
 }
