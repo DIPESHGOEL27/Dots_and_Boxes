@@ -39,17 +39,25 @@ body {
 }
 
 /* ─── Lobby Card ───────────────────────────────────────── */
+.app-root {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
 .lobby-card {
   background: var(--card);
   border-radius: 18px;
   box-shadow: var(--box-shadow);
-  max-width: 460px;
-  margin: 40px auto;
-  padding: 2rem 2rem 1.5rem 2rem;
+  max-width: 480px;
+  width: 100%;
+  margin: 1rem auto;
+  padding: 1.5rem 2rem 1.2rem 2rem;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 1.2rem;
+  gap: 0.8rem;
 }
 
 .lobby-title-row {
@@ -84,7 +92,7 @@ body {
 .lobby-fieldset {
   border: 1.5px solid var(--border);
   border-radius: 12px;
-  padding: 1rem 1.2rem 0.8rem;
+  padding: 0.6rem 1rem 0.5rem;
   margin: 0;
 }
 
@@ -101,12 +109,25 @@ body {
 .lobby-section {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  margin-bottom: 0.8rem;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
 }
 
 .lobby-section:last-child {
   margin-bottom: 0;
+}
+
+/* Inline row for avatar + color on one line */
+.lobby-section.inline-row {
+  flex-direction: row;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.inline-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
 }
 
 .lobby-section label {
@@ -143,9 +164,9 @@ body {
   background: var(--bg);
   border: 2px solid var(--border);
   border-radius: 10px;
-  width: 42px;
-  height: 42px;
-  font-size: 1.3rem;
+  width: 36px;
+  height: 36px;
+  font-size: 1.15rem;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -256,11 +277,11 @@ body {
   color: #fff;
   border: none;
   border-radius: 12px;
-  padding: 0.8rem 1.5rem;
+  padding: 0.7rem 1.5rem;
   font-size: 1.1rem;
   font-weight: 700;
   cursor: pointer;
-  margin-top: 0.5rem;
+  margin-top: 0.2rem;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
   transition: transform 0.15s, box-shadow 0.2s;
 }
@@ -276,10 +297,14 @@ body {
 
 /* ─── Responsive ───────────────────────────────────────── */
 @media (max-width: 600px) {
+  .app-root {
+    align-items: flex-start;
+  }
+
   .lobby-card {
-    margin: 20px 12px;
-    padding: 1.2rem 1rem;
-    gap: 0.8rem;
+    margin: 12px;
+    padding: 1rem 0.8rem;
+    gap: 0.6rem;
   }
 
   .lobby-card h1 {
@@ -290,9 +315,14 @@ body {
     flex-direction: column;
   }
 
+  .lobby-section.inline-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
   .avatar-option {
-    width: 36px;
-    height: 36px;
-    font-size: 1.1rem;
+    width: 34px;
+    height: 34px;
+    font-size: 1rem;
   }
 }

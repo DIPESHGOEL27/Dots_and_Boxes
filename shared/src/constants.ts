@@ -30,7 +30,7 @@ export const PLAYER_COLORS = ['#00bcd4', '#ff4081', '#ffc107', '#8bc34a'] as con
 export const DEFAULT_PLAYER_NAMES = ['Player 1', 'Player 2', 'Player 3', 'Player 4'] as const;
 
 /** Available avatar emojis */
-export const PLAYER_AVATARS = ['🎮', '🎲', '🎯', '🏆', '⚡', '🔥', '🌟', '💎', '🎪', '🚀', '🎸', '🦊'] as const;
+export const PLAYER_AVATARS = ['�', '⚡', '🔥', '💎', '🚀', '🦊'] as const;
 
 /** Pixel spacing between dots on the game board */
 export const DOT_SPACING = 60;

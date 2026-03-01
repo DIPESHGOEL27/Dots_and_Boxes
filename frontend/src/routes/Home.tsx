@@ -108,24 +108,24 @@ const Home: React.FC = () => {
             />
           </div>
 
-          <div className="lobby-section">
-            <label>Avatar:</label>
-            <div className="avatar-picker">
-              {PLAYER_AVATARS.map((av) => (
-                <button
-                  key={av}
-                  className={`avatar-option ${playerAvatar === av ? 'selected' : ''}`}
-                  onClick={() => setPlayerAvatar(av)}
-                  aria-label={`Select avatar ${av}`}
-                >
-                  {av}
-                </button>
-              ))}
+          <div className="lobby-section inline-row">
+            <div className="inline-group">
+              <label>Avatar:</label>
+              <div className="avatar-picker">
+                {PLAYER_AVATARS.map((av) => (
+                  <button
+                    key={av}
+                    className={`avatar-option ${playerAvatar === av ? 'selected' : ''}`}
+                    onClick={() => setPlayerAvatar(av)}
+                    aria-label={`Select avatar ${av}`}
+                  >
+                    {av}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-
-          <div className="lobby-section">
-            <label>Color:</label>
+            <div className="inline-group">
+              <label>Color:</label>
             <div className="color-picker">
               {PLAYER_COLORS.map((c) => (
                 <button
@@ -136,6 +136,7 @@ const Home: React.FC = () => {
                   aria-label={`Select color ${c}`}
                 />
               ))}
+            </div>
             </div>
           </div>
         </fieldset>
