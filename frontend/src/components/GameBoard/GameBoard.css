@@ -155,18 +155,17 @@
 }
 
 .hline {
-  width: 48px;
+  width: 60px;
   height: 8px;
 }
 
 .vline {
   width: 8px;
-  height: 48px;
+  height: 60px;
 }
 
 .line.taken {
-  background: #888 !important;
-  box-shadow: none;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.15);
 }
 
 .line.clickable {
@@ -217,8 +216,8 @@
 /* ─── Boxes ────────────────────────────────────────────── */
 .box {
   position: absolute;
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   border-radius: 8px;
   z-index: 0;
   transition: background 0.3s, border 0.3s;

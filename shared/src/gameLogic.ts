@@ -193,6 +193,7 @@ export function createInitialState(
     gridSize,
     lines: [],
     lineSet: [],
+    lineOwners: {},
     boxes: {},
     scores: Array(maxPlayers).fill(0),
     currentPlayer: 0,
@@ -255,6 +256,7 @@ export function applyMove(
   // Apply the line
   const newLines = [...state.lines, normalized];
   const newLineSet = [...state.lineSet, key];
+  const newLineOwners = { ...state.lineOwners, [key]: playerIndex };
   lineSetAsSet.add(key);
 
   // Check for completed boxes
@@ -289,6 +291,7 @@ export function applyMove(
     ...state,
     lines: newLines,
     lineSet: newLineSet,
+    lineOwners: newLineOwners,
     boxes: newBoxes,
     scores: newScores,
     currentPlayer: gameOver ? playerIndex : nextPlayer,

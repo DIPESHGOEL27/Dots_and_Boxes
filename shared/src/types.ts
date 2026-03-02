@@ -30,6 +30,7 @@ export interface GameState {
   gridSize: number;
   lines: Line[];
   lineSet: string[]; // Serialized line keys for O(1) dedup
+  lineOwners: Record<LineKey, PlayerIndex>; // Which player drew each line
   boxes: Record<BoxKey, PlayerIndex>;
   scores: number[];
   currentPlayer: PlayerIndex;

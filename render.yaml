@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: dots-and-boxes-backend
+    runtime: node
+    rootDir: ./
+    buildCommand: cd shared && npm install && npm run build && cd ../backend && npm install && npx tsc
+    startCommand: cd backend && node dist/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production

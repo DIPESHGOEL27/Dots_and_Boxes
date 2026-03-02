@@ -9,6 +9,7 @@ import {
   Line,
   normalizeLine,
   isSameLine,
+  lineToKey,
   DOT_SPACING,
 } from "dots-and-boxes-shared";
 import "./GameBoard.css";
@@ -61,6 +62,17 @@ const Board: React.FC<BoardProps> = ({
 
   const newBoxSet = useMemo(() => new Set(newBoxes), [newBoxes]);
 
+  // Map line keys to owner colors for O(1) lookup
+  const lineColorMap = useMemo(() => {
+    const map = new Map<string, string>();
+    if (state.lineOwners) {
+      for (const [key, playerIndex] of Object.entries(state.lineOwners)) {
+        map.set(key, colors[playerIndex] || '#888');
+      }
+    }
+    return map;
+  }, [state.lineOwners, colors]);
+
   const gridPixelSize = (gridSize - 1) * DOT_SPACING;
   const boardSize = gridPixelSize + DOT_SPACING; // padding around grid
 
@@ -95,6 +107,7 @@ const Board: React.FC<BoardProps> = ({
         const taken = isLineTaken(line);
         const isNew = isLastLine(line);
         const clickable = canInteract && !taken;
+        const ownerColor = taken ? lineColorMap.get(lineToKey(line)) || '#888' : undefined;
 
         result.push(
           <div
@@ -109,9 +122,9 @@ const Board: React.FC<BoardProps> = ({
               .filter(Boolean)
               .join(" ")}
             style={{
-              left: `${x * DOT_SPACING + 6}px`,
+              left: `${x * DOT_SPACING}px`,
               top: `${y * DOT_SPACING - 4}px`,
-              background: taken ? "#888" : undefined,
+              background: ownerColor,
             }}
             onClick={clickable ? () => onLineClick(line) : undefined}
             role={clickable ? "button" : undefined}
@@ -133,6 +146,7 @@ const Board: React.FC<BoardProps> = ({
         const taken = isLineTaken(line);
         const isNew = isLastLine(line);
         const clickable = canInteract && !taken;
+        const ownerColor = taken ? lineColorMap.get(lineToKey(line)) || '#888' : undefined;
 
         result.push(
           <div
@@ -148,8 +162,8 @@ const Board: React.FC<BoardProps> = ({
               .join(" ")}
             style={{
               left: `${x * DOT_SPACING - 4}px`,
-              top: `${y * DOT_SPACING + 6}px`,
-              background: taken ? "#888" : undefined,
+              top: `${y * DOT_SPACING}px`,
+              background: ownerColor,
             }}
             onClick={clickable ? () => onLineClick(line) : undefined}
             role={clickable ? "button" : undefined}
