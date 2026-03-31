@@ -76,4 +76,24 @@ describe("useGameState", () => {
 
     expect(result.current.state.currentPlayer).toBe(1);
   });
+
+  it("undoes the last local move", () => {
+    const { result } = renderHook(() => useGameState(3, 2));
+
+    act(() => {
+      result.current.makeLocalMove([0, 0, 1, 0], 0);
+      result.current.makeLocalMove([0, 1, 1, 1], 1);
+    });
+
+    expect(result.current.state.lines.length).toBe(2);
+
+    let didUndo = false;
+    act(() => {
+      didUndo = result.current.undoLocalMove();
+    });
+
+    expect(didUndo).toBe(true);
+    expect(result.current.state.lines.length).toBe(1);
+    expect(result.current.state.currentPlayer).toBe(1);
+  });
 });

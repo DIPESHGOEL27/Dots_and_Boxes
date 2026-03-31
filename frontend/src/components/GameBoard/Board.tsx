@@ -11,12 +11,14 @@ import {
   isSameLine,
   lineToKey,
   DOT_SPACING,
+  LINE_THICKNESS,
 } from "dots-and-boxes-shared";
 import "./GameBoard.css";
 
 interface BoardProps {
   state: GameState;
   colors: string[];
+  previewColor: string;
   canInteract: boolean;
   onLineClick: (line: Line) => void;
   /** Recently completed box keys for animation */
@@ -28,28 +30,41 @@ interface BoardProps {
 const Board: React.FC<BoardProps> = ({
   state,
   colors,
+  previewColor,
   canInteract,
   onLineClick,
   newBoxes = [],
   lastLine = null,
 }) => {
   const { gridSize, lines, boxes } = state;
+  const halfLine = LINE_THICKNESS / 2;
+  const boxInset = halfLine;
+  const boxSize = DOT_SPACING - LINE_THICKNESS;
 
   // Pre-build a set of taken line keys for O(1) lookup
   const takenSet = useMemo(() => {
     const set = new Set<string>();
     for (const l of lines) {
-      set.add(`${l[0]},${l[1]},${l[2]},${l[3]}`);
+      set.add(lineToKey(l));
     }
     return set;
   }, [lines]);
 
   const isLineTaken = useCallback(
     (line: Line): boolean => {
-      const n = normalizeLine(line);
-      return takenSet.has(`${n[0]},${n[1]},${n[2]},${n[3]}`);
+      return takenSet.has(lineToKey(line));
     },
     [takenSet],
+  );
+
+  const handleLineKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>, line: Line, clickable: boolean) => {
+      if (!clickable) return;
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      onLineClick(line);
+    },
+    [onLineClick],
   );
 
   const isLastLine = useCallback(
@@ -67,7 +82,7 @@ const Board: React.FC<BoardProps> = ({
     const map = new Map<string, string>();
     if (state.lineOwners) {
       for (const [key, playerIndex] of Object.entries(state.lineOwners)) {
-        map.set(key, colors[playerIndex] || '#888');
+        map.set(key, colors[playerIndex] || "#888");
       }
     }
     return map;
@@ -107,7 +122,9 @@ const Board: React.FC<BoardProps> = ({
         const taken = isLineTaken(line);
         const isNew = isLastLine(line);
         const clickable = canInteract && !taken;
-        const ownerColor = taken ? lineColorMap.get(lineToKey(line)) || '#888' : undefined;
+        const ownerColor = taken
+          ? lineColorMap.get(lineToKey(line)) || "#888"
+          : undefined;
 
         result.push(
           <div
@@ -123,10 +140,11 @@ const Board: React.FC<BoardProps> = ({
               .join(" ")}
             style={{
               left: `${x * DOT_SPACING}px`,
-              top: `${y * DOT_SPACING - 4}px`,
-              background: ownerColor,
+              top: `${y * DOT_SPACING - halfLine}px`,
+              background: ownerColor || (clickable ? `${previewColor}66` : undefined),
             }}
             onClick={clickable ? () => onLineClick(line) : undefined}
+            onKeyDown={(event) => handleLineKeyDown(event, line, clickable)}
             role={clickable ? "button" : undefined}
             tabIndex={clickable ? 0 : undefined}
             aria-label={
@@ -146,7 +164,9 @@ const Board: React.FC<BoardProps> = ({
         const taken = isLineTaken(line);
         const isNew = isLastLine(line);
         const clickable = canInteract && !taken;
-        const ownerColor = taken ? lineColorMap.get(lineToKey(line)) || '#888' : undefined;
+        const ownerColor = taken
+          ? lineColorMap.get(lineToKey(line)) || "#888"
+          : undefined;
 
         result.push(
           <div
@@ -161,11 +181,12 @@ const Board: React.FC<BoardProps> = ({
               .filter(Boolean)
               .join(" ")}
             style={{
-              left: `${x * DOT_SPACING - 4}px`,
+              left: `${x * DOT_SPACING - halfLine}px`,
               top: `${y * DOT_SPACING}px`,
-              background: ownerColor,
+              background: ownerColor || (clickable ? `${previewColor}66` : undefined),
             }}
             onClick={clickable ? () => onLineClick(line) : undefined}
+            onKeyDown={(event) => handleLineKeyDown(event, line, clickable)}
             role={clickable ? "button" : undefined}
             tabIndex={clickable ? 0 : undefined}
             aria-label={
@@ -179,7 +200,17 @@ const Board: React.FC<BoardProps> = ({
     }
 
     return result;
-  }, [gridSize, isLineTaken, isLastLine, canInteract, onLineClick]);
+  }, [
+    gridSize,
+    isLineTaken,
+    isLastLine,
+    canInteract,
+    lineColorMap,
+    onLineClick,
+    previewColor,
+    halfLine,
+    handleLineKeyDown,
+  ]);
 
   // ─── Boxes ─────────────────────────────────────────────
   const boxElements = useMemo(() => {
@@ -201,8 +232,10 @@ const Board: React.FC<BoardProps> = ({
               .filter(Boolean)
               .join(" ")}
             style={{
-              left: `${x * DOT_SPACING + 4}px`,
-              top: `${y * DOT_SPACING + 4}px`,
+              left: `${x * DOT_SPACING + boxInset}px`,
+              top: `${y * DOT_SPACING + boxInset}px`,
+              width: `${boxSize}px`,
+              height: `${boxSize}px`,
               background:
                 owner !== undefined
                   ? (colors[owner] || "#888") + "44"
@@ -217,12 +250,16 @@ const Board: React.FC<BoardProps> = ({
       }
     }
     return result;
-  }, [gridSize, boxes, colors, newBoxSet]);
+  }, [gridSize, boxes, colors, newBoxSet, boxInset, boxSize]);
 
   return (
     <div
       className="board-container"
-      style={{ width: boardSize, height: boardSize }}
+      style={{
+        width: boardSize,
+        height: boardSize,
+        ["--preview-color" as string]: previewColor,
+      }}
     >
       <div
         className="grid-inner"

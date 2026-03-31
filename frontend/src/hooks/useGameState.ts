@@ -3,7 +3,7 @@
 // Uses shared game logic for move application.
 // ============================================================
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   GameState,
   Line,
@@ -17,6 +17,7 @@ interface UseGameStateReturn {
   state: GameState;
   setState: React.Dispatch<React.SetStateAction<GameState>>;
   makeLocalMove: (line: Line, playerIndex: PlayerIndex) => boolean;
+  undoLocalMove: () => boolean;
   resetGame: (gridSize: number, playerCount: number) => void;
 }
 
@@ -27,24 +28,41 @@ export function useGameState(
   const [state, setState] = useState<GameState>(() =>
     createInitialState(gridSize, playerCount),
   );
+  const historyRef = useRef<GameState[]>([]);
 
   const makeLocalMove = useCallback(
     (line: Line, playerIndex: PlayerIndex): boolean => {
       const normalized = normalizeLine(line);
-      const newState = applyMove(state, normalized, playerIndex);
-      if (!newState) return false;
-      setState(newState);
-      return true;
+      let applied = false;
+
+      setState((prevState) => {
+        const newState = applyMove(prevState, normalized, playerIndex);
+        if (!newState) return prevState;
+
+        historyRef.current.push(prevState);
+        applied = true;
+        return newState;
+      });
+
+      return applied;
     },
-    [state],
+    [],
   );
+
+  const undoLocalMove = useCallback((): boolean => {
+    const previous = historyRef.current.pop();
+    if (!previous) return false;
+    setState(previous);
+    return true;
+  }, []);
 
   const resetGame = useCallback(
     (newGridSize: number, newPlayerCount: number) => {
+      historyRef.current = [];
       setState(createInitialState(newGridSize, newPlayerCount));
     },
     [],
   );
 
-  return { state, setState, makeLocalMove, resetGame };
+  return { state, setState, makeLocalMove, undoLocalMove, resetGame };
 }

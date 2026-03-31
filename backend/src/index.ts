@@ -15,10 +15,19 @@ import { RECONNECT_TIMEOUT_SECONDS } from "dots-and-boxes-shared";
 
 // ─── Configuration ───────────────────────────────────────────
 
-const allowedOrigins = [
+const defaultAllowedOrigins = [
   "http://localhost:3000",
   "https://dots-and-boxes-xi.vercel.app",
 ];
+
+const envAllowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const allowedOrigins = Array.from(
+  new Set([...defaultAllowedOrigins, ...envAllowedOrigins]),
+);
 
 const PORT = parseInt(process.env.PORT || "4000", 10);
 

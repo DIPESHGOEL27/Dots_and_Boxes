@@ -40,7 +40,7 @@ export const DEFAULT_PLAYER_NAMES = [
 ] as const;
 
 /** Available avatar emojis */
-export const PLAYER_AVATARS = ["�", "⚡", "🔥", "💎", "🚀", "🦊"] as const;
+export const PLAYER_AVATARS = ["🎯", "⚡", "🔥", "💎", "🚀", "🦊"] as const;
 
 /** Pixel spacing between dots on the game board */
 export const DOT_SPACING = 60;

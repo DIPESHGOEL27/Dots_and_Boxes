@@ -8,11 +8,14 @@ import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import {
   PlayerInfo,
   AIDifficulty,
+  AI_DIFFICULTIES,
   PLAYER_COLORS,
   DEFAULT_PLAYER_NAMES,
   PLAYER_AVATARS,
   DEFAULT_GRID_SIZE,
   DEFAULT_PLAYERS,
+  isValidGridSize,
+  isValidPlayerCount,
 } from "dots-and-boxes-shared";
 import { GameBoard, GameMode } from "../components/GameBoard";
 
@@ -25,11 +28,20 @@ const Game: React.FC<GameRouteProps> = ({ mode }) => {
   const { roomId } = useParams<{ roomId?: string }>();
   const [searchParams] = useSearchParams();
 
-  const gridSize = Number(searchParams.get("gridSize")) || DEFAULT_GRID_SIZE;
-  const playerCount =
-    Number(searchParams.get("playerCount")) || DEFAULT_PLAYERS;
+  const requestedGridSize = Number(searchParams.get("gridSize"));
+  const requestedPlayerCount = Number(searchParams.get("playerCount"));
+  const requestedDifficulty = searchParams.get("difficulty") as AIDifficulty | null;
+
+  const gridSize = isValidGridSize(requestedGridSize)
+    ? requestedGridSize
+    : DEFAULT_GRID_SIZE;
+  const playerCount = isValidPlayerCount(requestedPlayerCount)
+    ? requestedPlayerCount
+    : DEFAULT_PLAYERS;
   const difficulty =
-    (searchParams.get("difficulty") as AIDifficulty) || "medium";
+    requestedDifficulty && AI_DIFFICULTIES.includes(requestedDifficulty)
+      ? requestedDifficulty
+      : "medium";
 
   const playerInfo: PlayerInfo = useMemo(
     () => ({

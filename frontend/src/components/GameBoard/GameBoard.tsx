@@ -18,6 +18,7 @@ import {
   PlayerInfo,
   AIDifficulty,
   normalizeLine,
+  totalPossibleLines,
   PLAYER_COLORS,
   DEFAULT_PLAYER_NAMES,
   PLAYER_AVATARS,
@@ -57,7 +58,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const { socket, isConnected, connectionError } = useSocket(mode === "online");
 
   // ─── Game state ────────────────────────────────────────
-  const { state, setState, makeLocalMove, resetGame } = useGameState(
+  const { state, setState, makeLocalMove, undoLocalMove, resetGame } = useGameState(
     gridSize,
     playerCount,
   );
@@ -74,6 +75,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const [lastLine, setLastLine] = useState<Line | null>(null);
   const [newBoxes, setNewBoxes] = useState<string[]>([]);
   const prevScoresRef = useRef<number[]>([]);
+  const prevBoxesRef = useRef<Record<string, number>>({});
 
   // ─── Build players array for local/AI ──────────────────
   const localPlayers: PlayerInfo[] = useMemo(() => {
@@ -116,6 +118,23 @@ const GameBoard: React.FC<GameBoardProps> = ({
     prevScoresRef.current = [...state.scores];
   }, [state.scores]);
 
+  useEffect(() => {
+    const previousBoxes = prevBoxesRef.current;
+    const newlyCompleted = Object.keys(state.boxes).filter(
+      (boxKey) => previousBoxes[boxKey] === undefined,
+    );
+
+    prevBoxesRef.current = state.boxes;
+    if (newlyCompleted.length === 0) return;
+
+    setNewBoxes(newlyCompleted);
+    const timer = setTimeout(() => {
+      setNewBoxes([]);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [state.boxes]);
+
   // ─── Line click handler ────────────────────────────────
   const handleLineClick = useCallback(
     (line: Line) => {
@@ -148,7 +167,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const aiMoveHandler = useCallback(
     (line: Line) => {
       const normalized = normalizeLine(line);
-      makeLocalMove(normalized, state.currentPlayer);
+      const success = makeLocalMove(normalized, state.currentPlayer);
+      if (!success) return;
+
       setLastLine(normalized);
       playSound("click");
       setTimeout(() => setLastLine(null), 300);
@@ -317,7 +338,18 @@ const GameBoard: React.FC<GameBoardProps> = ({
     setLastLine(null);
     setNewBoxes([]);
     prevScoresRef.current = [];
+    prevBoxesRef.current = {};
   }, [gridSize, playerCount, resetGame]);
+
+  const handleUndoMove = useCallback(() => {
+    if (mode !== "local") return;
+    const didUndo = undoLocalMove();
+    if (!didUndo) return;
+
+    setLastLine(null);
+    setNewBoxes([]);
+    playSound("click");
+  }, [mode, undoLocalMove]);
 
   // ─── Can this player interact? ─────────────────────────
   const canInteract = useMemo(() => {
@@ -332,6 +364,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
     }
     return true; // Local: all players can interact
   }, [gameStarted, state.gameOver, state.currentPlayer, mode, myPlayerIndex]);
+
+  const totalLines = useMemo(() => totalPossibleLines(state.gridSize), [state.gridSize]);
+  const movesRemaining = totalLines - state.lines.length;
 
   // ─── Waiting room (online, pre-game) ──────────────────
   if (mode === "online" && waiting && !gameStarted) {
@@ -355,13 +390,25 @@ const GameBoard: React.FC<GameBoardProps> = ({
     <div className="game-root">
       {/* Header */}
       <div className="game-header">
-        <button
-          className="back-btn"
-          onClick={onBack}
-          aria-label="Back to lobby"
-        >
-          &larr; Back
-        </button>
+        <div className="game-actions">
+          <button
+            className="back-btn"
+            onClick={onBack}
+            aria-label="Back to lobby"
+          >
+            &larr; Back
+          </button>
+          {mode === "local" && (
+            <button
+              className="undo-btn"
+              onClick={handleUndoMove}
+              disabled={!gameStarted || state.lines.length === 0}
+              aria-label="Undo last move"
+            >
+              ↶ Undo
+            </button>
+          )}
+        </div>
 
         <Scoreboard
           players={localPlayers}
@@ -381,6 +428,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
       <Board
         state={state}
         colors={colors}
+        previewColor={colors[state.currentPlayer] || "#00bcd4"}
         canInteract={canInteract}
         onLineClick={handleLineClick}
         newBoxes={newBoxes}
@@ -389,6 +437,13 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
       {/* Footer */}
       <div className="game-footer">
+        <div className="game-meta">
+          <span className="meta-pill">Grid {state.gridSize}x{state.gridSize}</span>
+          <span className="meta-pill">Moves Left: {Math.max(0, movesRemaining)}</span>
+          {mode === "ai" && (
+            <span className="meta-pill">AI: {aiDifficulty}</span>
+          )}
+        </div>
         {!state.gameOver && gameStarted && (
           <div className="turn" style={{ color: colors[state.currentPlayer] }}>
             {localPlayers[state.currentPlayer]?.avatar}{" "}

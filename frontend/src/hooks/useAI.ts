@@ -244,10 +244,16 @@ export function useAI({
     if (!enabled) return;
     if (state.gameOver) return;
     if (state.currentPlayer !== aiPlayerIndex) return;
-    if (!state.started) return;
+
+    const delayMs =
+      difficulty === "easy"
+        ? Math.max(250, AI_MOVE_DELAY_MS - 150)
+        : difficulty === "hard"
+          ? AI_MOVE_DELAY_MS + 250
+          : AI_MOVE_DELAY_MS;
 
     // Delay to simulate thinking
-    timerRef.current = setTimeout(computeMove, AI_MOVE_DELAY_MS);
+    timerRef.current = setTimeout(computeMove, delayMs);
 
     return () => {
       if (timerRef.current) {
@@ -256,9 +262,9 @@ export function useAI({
     };
   }, [
     enabled,
+    difficulty,
     state.currentPlayer,
     state.gameOver,
-    state.started,
     aiPlayerIndex,
     computeMove,
   ]);
