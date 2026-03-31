@@ -19,8 +19,9 @@ import {
 } from "dots-and-boxes-shared";
 import logger from "../utils/logger";
 
-class RoomManager {
+export class RoomManager {
   private rooms = new Map<RoomId, Room>();
+  private socketBindings = new Map<string, { roomId: RoomId; playerId: string }>();
   private cleanupTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
@@ -70,13 +71,75 @@ class RoomManager {
   }
 
   /**
+   * Link an active socket to a player id for room operations.
+   */
+  bindSocket(roomId: RoomId, playerId: string, socketId: string): boolean {
+    const room = this.getRoom(roomId);
+    if (!room) return false;
+
+    const playerExists = room.players.some((player) => player.id === playerId);
+    if (!playerExists) return false;
+
+    this.socketBindings.set(socketId, { roomId, playerId });
+    return true;
+  }
+
+  /**
+   * Return room/player binding for a socket if available.
+   */
+  getBindingBySocket(
+    socketId: string,
+  ): { roomId: RoomId; playerId: string } | null {
+    return this.socketBindings.get(socketId) || null;
+  }
+
+  /**
+   * Remove socket binding when client disconnects.
+   */
+  unbindSocket(socketId: string): void {
+    this.socketBindings.delete(socketId);
+  }
+
+  /**
+   * Resolve full room id from an exact id or an unambiguous short prefix.
+   */
+  private resolveRoomId(inputRoomId: RoomId): RoomId | undefined {
+    if (this.rooms.has(inputRoomId)) {
+      return inputRoomId;
+    }
+
+    // Support short code join by prefix (e.g. first 8 chars)
+    if (inputRoomId.length >= 6) {
+      const matches = Array.from(this.rooms.keys()).filter((id) =>
+        id.startsWith(inputRoomId),
+      );
+      if (matches.length === 1) {
+        return matches[0];
+      }
+    }
+
+    return undefined;
+  }
+
+  /**
    * Join an existing room.
    */
   joinRoom(
     roomId: RoomId,
     playerInfo: PlayerInfo,
-  ): { success: boolean; room?: Room; error?: string } {
-    const room = this.rooms.get(roomId);
+  ): {
+    success: boolean;
+    roomId?: RoomId;
+    room?: Room;
+    playerIndex?: number;
+    error?: string;
+  } {
+    const resolvedRoomId = this.resolveRoomId(roomId);
+    if (!resolvedRoomId) {
+      return { success: false, error: "Room not found." };
+    }
+
+    const room = this.rooms.get(resolvedRoomId);
     if (!room) {
       return { success: false, error: "Room not found." };
     }
@@ -90,17 +153,29 @@ class RoomManager {
     }
 
     // Check if player is already in the room
-    if (room.players.some((p) => p.id === playerInfo.id)) {
-      return { success: true, room };
+    const existingIndex = room.players.findIndex((p) => p.id === playerInfo.id);
+    if (existingIndex !== -1) {
+      return {
+        success: true,
+        roomId: resolvedRoomId,
+        room,
+        playerIndex: existingIndex,
+      };
     }
 
     room.players.push(playerInfo);
+    const playerIndex = room.players.length - 1;
+
     logger.info(
-      { roomId, playerId: playerInfo.id, playerCount: room.players.length },
+      {
+        roomId: resolvedRoomId,
+        playerId: playerInfo.id,
+        playerCount: room.players.length,
+      },
       "Player joined room",
     );
 
-    return { success: true, room };
+    return { success: true, roomId: resolvedRoomId, room, playerIndex };
   }
 
   /**
@@ -110,47 +185,72 @@ class RoomManager {
     roomId: RoomId,
     playerId: string,
     newSocketId: string,
+    playerInfo?: PlayerInfo,
   ): {
     success: boolean;
+    roomId?: RoomId;
     room?: Room;
     playerIndex?: number;
+    reconnected?: boolean;
     error?: string;
   } {
-    const room = this.rooms.get(roomId);
+    const resolvedRoomId = this.resolveRoomId(roomId);
+    if (!resolvedRoomId) {
+      return { success: false, error: "Room not found." };
+    }
+
+    const room = this.rooms.get(resolvedRoomId);
     if (!room) {
       return { success: false, error: "Room not found." };
     }
 
-    const disconnected = room.disconnectedPlayers.get(playerId);
-    if (!disconnected) {
+    const playerIndex = room.players.findIndex((player) => player.id === playerId);
+    if (playerIndex === -1) {
+      // Allow fallback join only before game starts and only with full player info.
+      if (!room.state.started && playerInfo) {
+        const joined = this.joinRoom(resolvedRoomId, playerInfo);
+        if (!joined.success || !joined.room || joined.playerIndex === undefined) {
+          return { success: false, error: joined.error || "Cannot rejoin room." };
+        }
+
+        this.bindSocket(resolvedRoomId, playerInfo.id, newSocketId);
+        return {
+          success: true,
+          roomId: resolvedRoomId,
+          room: joined.room,
+          playerIndex: joined.playerIndex,
+          reconnected: false,
+        };
+      }
+
       return { success: false, error: "No reconnection available." };
     }
 
-    // Restore the player with the new socket id
-    const restoredInfo: PlayerInfo = {
-      ...disconnected.playerInfo,
-      id: newSocketId,
-    };
-
-    room.players[disconnected.playerIndex] = restoredInfo;
-    room.disconnectedPlayers.delete(playerId);
-
-    // Update creator if needed
-    if (room.creator === playerId) {
-      room.creator = newSocketId;
+    const disconnected = room.disconnectedPlayers.get(playerId);
+    if (disconnected) {
+      room.disconnectedPlayers.delete(playerId);
     }
+
+    this.bindSocket(resolvedRoomId, playerId, newSocketId);
 
     logger.info(
       {
-        roomId,
-        oldId: playerId,
-        newId: newSocketId,
-        playerIndex: disconnected.playerIndex,
+        roomId: resolvedRoomId,
+        playerId,
+        socketId: newSocketId,
+        playerIndex,
+        reconnected: Boolean(disconnected),
       },
-      "Player reconnected",
+      "Player rejoin processed",
     );
 
-    return { success: true, room, playerIndex: disconnected.playerIndex };
+    return {
+      success: true,
+      roomId: resolvedRoomId,
+      room,
+      playerIndex,
+      reconnected: Boolean(disconnected),
+    };
   }
 
   /**
@@ -158,58 +258,92 @@ class RoomManager {
    */
   handleDisconnect(
     socketId: string,
-  ): { roomId: RoomId; room: Room; playerIndex: number } | null {
-    for (const [roomId, room] of this.rooms) {
-      const playerIndex = room.players.findIndex((p) => p.id === socketId);
-      if (playerIndex === -1) continue;
-
-      if (!room.state.started || room.state.gameOver) {
-        // Game not started or already over: remove the player
-        room.players.splice(playerIndex, 1);
-        logger.info(
-          { roomId, socketId, playerIndex },
-          "Player removed from unstarted/finished room",
-        );
-
-        // If room is empty, delete it
-        if (room.players.length === 0) {
-          this.rooms.delete(roomId);
-          logger.info({ roomId }, "Empty room deleted");
-          return null;
-        }
-
-        // If creator left, reassign
-        if (room.creator === socketId && room.players.length > 0) {
-          room.creator = room.players[0].id;
-        }
-
-        return { roomId, room, playerIndex };
+  ):
+    | {
+        roomId: RoomId;
+        room: Room;
+        playerIndex: number;
+        playerInfo: PlayerInfo;
+        removed: boolean;
       }
+    | null {
+    const binding = this.socketBindings.get(socketId);
+    this.socketBindings.delete(socketId);
 
-      // Game in progress: mark player as disconnected with reconnection window
-      const playerInfo = room.players[playerIndex];
-      room.disconnectedPlayers.set(socketId, {
-        playerIndex,
-        playerInfo,
-        disconnectedAt: Date.now(),
-      });
-
-      // Mark the slot as disconnected (keep the index)
-      room.players[playerIndex] = {
-        ...playerInfo,
-        id: `disconnected-${socketId}`,
-        name: `${playerInfo.name} (disconnected)`,
-      };
-
-      logger.info(
-        { roomId, socketId, playerIndex, timeout: RECONNECT_TIMEOUT_SECONDS },
-        "Player disconnected, waiting for reconnect",
-      );
-
-      return { roomId, room, playerIndex };
+    if (!binding) {
+      return null;
     }
 
-    return null;
+    const room = this.rooms.get(binding.roomId);
+    if (!room) {
+      return null;
+    }
+
+    const playerIndex = room.players.findIndex(
+      (player) => player.id === binding.playerId,
+    );
+    if (playerIndex === -1) {
+      return null;
+    }
+
+    const playerInfo = room.players[playerIndex];
+
+    if (!room.state.started || room.state.gameOver) {
+      // Game not started or already over: remove the player.
+      room.players.splice(playerIndex, 1);
+      room.disconnectedPlayers.delete(binding.playerId);
+
+      logger.info(
+        { roomId: binding.roomId, socketId, playerIndex, playerId: binding.playerId },
+        "Player removed from unstarted/finished room",
+      );
+
+      // If room is empty, delete it.
+      if (room.players.length === 0) {
+        this.rooms.delete(binding.roomId);
+        logger.info({ roomId: binding.roomId }, "Empty room deleted");
+        return null;
+      }
+
+      // If creator left, reassign to first remaining player.
+      if (room.creator === binding.playerId && room.players.length > 0) {
+        room.creator = room.players[0].id;
+      }
+
+      return {
+        roomId: binding.roomId,
+        room,
+        playerIndex,
+        playerInfo,
+        removed: true,
+      };
+    }
+
+    // Game in progress: mark player as disconnected, preserve player slot/id.
+    room.disconnectedPlayers.set(binding.playerId, {
+      playerIndex,
+      playerInfo,
+      disconnectedAt: Date.now(),
+    });
+
+    logger.info(
+      {
+        roomId: binding.roomId,
+        socketId,
+        playerId: binding.playerId,
+        playerIndex,
+        timeout: RECONNECT_TIMEOUT_SECONDS,
+      },
+      "Player disconnected, waiting for reconnect",
+    );
+
+    return {
+      roomId: binding.roomId,
+      room,
+      playerIndex,
+      playerInfo,
+      removed: false,
+    };
   }
 
   /**
@@ -247,14 +381,19 @@ class RoomManager {
    * Get a room by ID.
    */
   getRoom(roomId: RoomId): Room | undefined {
-    return this.rooms.get(roomId);
+    const resolvedRoomId = this.resolveRoomId(roomId);
+    if (!resolvedRoomId) return undefined;
+    return this.rooms.get(resolvedRoomId);
   }
 
   /**
    * Update the game state for a room.
    */
   updateState(roomId: RoomId, state: GameState): void {
-    const room = this.rooms.get(roomId);
+    const resolvedRoomId = this.resolveRoomId(roomId);
+    if (!resolvedRoomId) return;
+
+    const room = this.rooms.get(resolvedRoomId);
     if (room) {
       room.state = state;
     }
@@ -280,6 +419,11 @@ class RoomManager {
       // Remove rooms older than TTL
       if (age > ROOM_TTL_MS) {
         this.rooms.delete(roomId);
+        for (const [socketId, binding] of this.socketBindings) {
+          if (binding.roomId === roomId) {
+            this.socketBindings.delete(socketId);
+          }
+        }
         cleaned++;
         continue;
       }
@@ -287,6 +431,11 @@ class RoomManager {
       // Remove rooms where game ended more than 5 minutes ago
       if (room.state.gameOver && age > 5 * 60 * 1000) {
         this.rooms.delete(roomId);
+        for (const [socketId, binding] of this.socketBindings) {
+          if (binding.roomId === roomId) {
+            this.socketBindings.delete(socketId);
+          }
+        }
         cleaned++;
       }
     }
@@ -307,6 +456,8 @@ class RoomManager {
       clearInterval(this.cleanupTimer);
       this.cleanupTimer = null;
     }
+    this.rooms.clear();
+    this.socketBindings.clear();
   }
 }
 

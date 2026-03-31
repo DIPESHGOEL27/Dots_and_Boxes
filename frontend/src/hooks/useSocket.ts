@@ -11,6 +11,7 @@ const BACKEND_URL =
 
 interface UseSocketReturn {
   socket: Socket | null;
+  socketId: string | null;
   isConnected: boolean;
   connectionError: string | null;
 }
@@ -18,6 +19,7 @@ interface UseSocketReturn {
 export function useSocket(enabled: boolean = true): UseSocketReturn {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [socketId, setSocketId] = useState<string | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -35,16 +37,19 @@ export function useSocket(enabled: boolean = true): UseSocketReturn {
 
     socket.on("connect", () => {
       setIsConnected(true);
+      setSocketId(socket.id || null);
       setConnectionError(null);
     });
 
     socket.on("disconnect", () => {
       setIsConnected(false);
+      setSocketId(null);
     });
 
     socket.on("connect_error", (err) => {
       setConnectionError(`Connection failed: ${err.message}`);
       setIsConnected(false);
+      setSocketId(null);
     });
 
     socket.on("serverShutdown", ({ message }: { message: string }) => {
@@ -60,6 +65,7 @@ export function useSocket(enabled: boolean = true): UseSocketReturn {
 
   return {
     socket: socketRef.current,
+    socketId,
     isConnected,
     connectionError,
   };

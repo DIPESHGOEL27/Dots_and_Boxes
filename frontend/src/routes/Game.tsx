@@ -44,12 +44,21 @@ const Game: React.FC<GameRouteProps> = ({ mode }) => {
       : "medium";
 
   const playerInfo: PlayerInfo = useMemo(
-    () => ({
-      id: `player-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      name: searchParams.get("playerName") || DEFAULT_PLAYER_NAMES[0],
-      color: searchParams.get("playerColor") || PLAYER_COLORS[0],
-      avatar: searchParams.get("playerAvatar") || PLAYER_AVATARS[0],
-    }),
+    () => {
+      let stablePlayerId = localStorage.getItem("dots-boxes-player-id");
+      if (!stablePlayerId) {
+        stablePlayerId =
+          `player-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        localStorage.setItem("dots-boxes-player-id", stablePlayerId);
+      }
+
+      return {
+        id: stablePlayerId,
+        name: searchParams.get("playerName") || DEFAULT_PLAYER_NAMES[0],
+        color: searchParams.get("playerColor") || PLAYER_COLORS[0],
+        avatar: searchParams.get("playerAvatar") || PLAYER_AVATARS[0],
+      };
+    },
     // Only create once per mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],

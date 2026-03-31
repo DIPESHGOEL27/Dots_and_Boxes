@@ -49,9 +49,10 @@ export function registerHandlers(io: Server, socket: Socket): void {
     }
 
     const { gridSize, maxPlayers, playerInfo } = validation.payload;
-    const info: PlayerInfo = { ...playerInfo, id: socket.id };
+    const info: PlayerInfo = { ...playerInfo };
 
     const { roomId, room } = roomManager.createRoom(gridSize, maxPlayers, info);
+    roomManager.bindSocket(roomId, info.id, socket.id);
     socket.join(roomId);
 
     socket.emit("roomCreated", { roomId });
@@ -59,6 +60,7 @@ export function registerHandlers(io: Server, socket: Socket): void {
       players: room.players,
       maxPlayers: room.state.maxPlayers,
       creator: room.creator,
+       started: room.state.started,
     });
   });
 
@@ -75,10 +77,10 @@ export function registerHandlers(io: Server, socket: Socket): void {
     }
 
     const { roomId, playerInfo } = validation.payload;
-    const info: PlayerInfo = { ...playerInfo, id: socket.id };
+    const info: PlayerInfo = { ...playerInfo };
 
     const result = roomManager.joinRoom(roomId, info);
-    if (!result.success || !result.room) {
+    if (!result.success || !result.room || !result.roomId) {
       socket.emit("error", {
         message: result.error || "Cannot join room.",
         code: "JOIN_FAILED",
@@ -86,12 +88,16 @@ export function registerHandlers(io: Server, socket: Socket): void {
       return;
     }
 
-    socket.join(roomId);
-    io.to(roomId).emit("waitingForPlayers", {
-      players: result.room.players,
-      maxPlayers: result.room.state.maxPlayers,
-      creator: result.room.creator,
-    });
+    roomManager.bindSocket(result.roomId, info.id, socket.id);
+    socket.join(result.roomId);
+      if (!result.room.state.started) {
+        io.to(result.roomId).emit("waitingForPlayers", {
+          players: result.room.players,
+          maxPlayers: result.room.state.maxPlayers,
+          creator: result.room.creator,
+          started: result.room.state.started,
+        });
+      }
   });
 
   // ─── Rejoin Room (Reconnection) ────────────────────────
@@ -106,10 +112,10 @@ export function registerHandlers(io: Server, socket: Socket): void {
       return;
     }
 
-    const { roomId, playerId } = validation.payload;
-    const result = roomManager.rejoinRoom(roomId, playerId, socket.id);
+    const { roomId, playerId, playerInfo } = validation.payload;
+    const result = roomManager.rejoinRoom(roomId, playerId, socket.id, playerInfo);
 
-    if (!result.success || !result.room) {
+    if (!result.success || !result.room || !result.roomId) {
       socket.emit("error", {
         message: result.error || "Cannot rejoin.",
         code: "REJOIN_FAILED",
@@ -117,13 +123,25 @@ export function registerHandlers(io: Server, socket: Socket): void {
       return;
     }
 
-    socket.join(roomId);
+    socket.join(result.roomId);
 
-    // Notify all players about the reconnection
-    io.to(roomId).emit("playerReconnected", {
-      playerInfo: result.room.players[result.playerIndex!],
-      playerIndex: result.playerIndex,
-    });
+    // Sync waiting room player list as source of truth.
+      if (!result.room.state.started) {
+        io.to(result.roomId).emit("waitingForPlayers", {
+          players: result.room.players,
+          maxPlayers: result.room.state.maxPlayers,
+          creator: result.room.creator,
+          started: result.room.state.started,
+        });
+      }
+
+    // Notify all players only if this was a true reconnection.
+    if (result.reconnected) {
+      io.to(result.roomId).emit("playerReconnected", {
+        playerInfo: result.room.players[result.playerIndex!],
+        playerIndex: result.playerIndex,
+      });
+    }
 
     // Send current game state to the reconnected player
     socket.emit("updateGame", { state: result.room.state });
@@ -143,13 +161,31 @@ export function registerHandlers(io: Server, socket: Socket): void {
 
     const { roomId } = validation.payload;
     const room = roomManager.getRoom(roomId);
+    const binding = roomManager.getBindingBySocket(socket.id);
+    const playerId = binding?.playerId;
 
     if (!room) {
       socket.emit("error", { message: "Room not found.", code: "NOT_FOUND" });
       return;
     }
 
-    if (room.creator !== socket.id) {
+    if (!playerId) {
+      socket.emit("error", {
+        message: "Session expired. Please rejoin room.",
+        code: "SESSION_EXPIRED",
+      });
+      return;
+    }
+
+    if (!binding || roomManager.getRoom(binding.roomId) !== room) {
+      socket.emit("error", {
+        message: "You are not connected to this room.",
+        code: "UNAUTHORIZED",
+      });
+      return;
+    }
+
+    if (room.creator !== playerId) {
       socket.emit("error", {
         message: "Only the room creator can start the game.",
         code: "UNAUTHORIZED",
@@ -226,7 +262,24 @@ export function registerHandlers(io: Server, socket: Socket): void {
     }
 
     // ─── TURN VALIDATION (Anti-cheat) ───────────────────
-    const playerIndex = room.players.findIndex((p) => p.id === socket.id);
+    const binding = roomManager.getBindingBySocket(socket.id);
+    if (!binding) {
+      socket.emit("invalidMove", {
+        message: "Session expired. Please refresh and rejoin.",
+        reason: "NOT_YOUR_TURN" as const,
+      });
+      return;
+    }
+
+    if (roomManager.getRoom(binding.roomId) !== room) {
+      socket.emit("invalidMove", {
+        message: "You are not in this room.",
+        reason: "NOT_YOUR_TURN" as const,
+      });
+      return;
+    }
+
+    const playerIndex = room.players.findIndex((p) => p.id === binding.playerId);
     if (playerIndex === -1) {
       socket.emit("invalidMove", {
         message: "You are not in this room.",
@@ -285,15 +338,16 @@ export function registerHandlers(io: Server, socket: Socket): void {
     logger.info({ socketId: socket.id }, "Client disconnected");
 
     const result = roomManager.handleDisconnect(socket.id);
+    roomManager.unbindSocket(socket.id);
     cleanupRateLimit(socket.id);
 
     if (result) {
       const { roomId, room, playerIndex } = result;
 
-      if (room.state.started && !room.state.gameOver) {
+      if (!result.removed && room.state.started && !room.state.gameOver) {
         // Game in progress: notify others about disconnect
         io.to(roomId).emit("playerDisconnected", {
-          playerInfo: room.players[playerIndex],
+          playerInfo: result.playerInfo,
           playerIndex,
           reconnectTimeout: RECONNECT_TIMEOUT_SECONDS,
         });
@@ -303,6 +357,7 @@ export function registerHandlers(io: Server, socket: Socket): void {
           players: room.players,
           maxPlayers: room.state.maxPlayers,
           creator: room.creator,
+           started: room.state.started,
         });
       }
     }

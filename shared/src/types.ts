@@ -44,7 +44,7 @@ export interface GameState {
 export interface Room {
   players: PlayerInfo[];
   state: GameState;
-  creator: string; // socket id of room creator
+  creator: string; // persistent player id of room creator
   createdAt: number; // timestamp
   disconnectedPlayers: Map<string, DisconnectedPlayer>;
 }
@@ -75,6 +75,7 @@ export interface JoinRoomPayload {
 export interface RejoinRoomPayload {
   roomId: RoomId;
   playerId: string;
+  playerInfo?: PlayerInfo;
 }
 
 /** Client → Server: start the game (creator only) */
@@ -98,6 +99,7 @@ export interface WaitingForPlayersEvent {
   players: PlayerInfo[];
   maxPlayers: number;
   creator: string;
+  started?: boolean;
 }
 
 /** Server → Client: game started */
@@ -116,6 +118,8 @@ export interface GameOverEvent {
   winner: PlayerIndex | null;
   winnerName: string | null;
   isDraw: boolean;
+  reason?: "normal" | "forfeit";
+  message?: string;
 }
 
 /** Server → Client: player disconnected */

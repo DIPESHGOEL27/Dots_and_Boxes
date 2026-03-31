@@ -18,13 +18,14 @@ import {
 } from "dots-and-boxes-shared";
 
 /**
- * Validate a UUID v4 string.
+ * Validate room ID input.
+ * Supports full UUID and short invite code prefix.
  */
-function isValidUUID(str: unknown): str is string {
+function isValidRoomId(str: unknown): str is string {
   if (typeof str !== "string") return false;
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    str,
-  );
+  const trimmed = str.trim();
+  if (trimmed.length < 6 || trimmed.length > 64) return false;
+  return /^[a-zA-Z0-9-]+$/.test(trimmed);
 }
 
 /**
@@ -93,7 +94,7 @@ export function validateJoinRoom(data: unknown): {
 
   const d = data as Record<string, unknown>;
 
-  if (!isValidUUID(d.roomId)) {
+  if (!isValidRoomId(d.roomId)) {
     return { valid: false, error: "Invalid room ID." };
   }
 
@@ -124,7 +125,7 @@ export function validateRejoinRoom(data: unknown): {
 
   const d = data as Record<string, unknown>;
 
-  if (!isValidUUID(d.roomId)) {
+  if (!isValidRoomId(d.roomId)) {
     return { valid: false, error: "Invalid room ID." };
   }
 
@@ -132,11 +133,16 @@ export function validateRejoinRoom(data: unknown): {
     return { valid: false, error: "Invalid player ID." };
   }
 
+  if (d.playerInfo !== undefined && !isValidPlayerInfo(d.playerInfo)) {
+    return { valid: false, error: "Invalid player info." };
+  }
+
   return {
     valid: true,
     payload: {
       roomId: d.roomId as string,
       playerId: d.playerId as string,
+      playerInfo: d.playerInfo as PlayerInfo | undefined,
     },
   };
 }
@@ -155,7 +161,7 @@ export function validateStartGame(data: unknown): {
 
   const d = data as Record<string, unknown>;
 
-  if (!isValidUUID(d.roomId)) {
+  if (!isValidRoomId(d.roomId)) {
     return { valid: false, error: "Invalid room ID." };
   }
 
@@ -178,7 +184,7 @@ export function validateMakeMove(
 
   const d = data as Record<string, unknown>;
 
-  if (!isValidUUID(d.roomId)) {
+  if (!isValidRoomId(d.roomId)) {
     return { valid: false, error: "Invalid room ID." };
   }
 

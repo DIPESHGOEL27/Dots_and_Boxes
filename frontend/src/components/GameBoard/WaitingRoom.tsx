@@ -12,6 +12,7 @@ interface WaitingRoomProps {
   players: PlayerInfo[];
   maxPlayers: number;
   isCreator: boolean;
+  isConnected: boolean;
   colors: string[];
   onStartGame: () => void;
   onBack: () => void;
@@ -22,6 +23,7 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
   players,
   maxPlayers,
   isCreator,
+  isConnected,
   colors,
   onStartGame,
   onBack,
@@ -64,9 +66,13 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
       <div className="waiting-room">
         <h2>Waiting for players...</h2>
 
+        <div className={`connection-pill ${isConnected ? "ok" : "bad"}`}>
+          {isConnected ? "Connected" : "Connection unstable. Reconnecting..."}
+        </div>
+
         <div className="room-id-section">
           <div className="room-id" style={{ marginBottom: "0.5rem" }}>
-            Room ID: <b>{roomId}</b>
+            Room ID: <b>{roomId.slice(0, 8)}</b>
             <button
               className="copy-btn"
               onClick={copyRoomId}
@@ -107,7 +113,7 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
         </ul>
 
         {isCreator && players.length >= 2 && (
-          <button className="start-btn" onClick={onStartGame}>
+          <button className="start-btn" onClick={onStartGame} disabled={!isConnected}>
             🚀 Start Game
           </button>
         )}

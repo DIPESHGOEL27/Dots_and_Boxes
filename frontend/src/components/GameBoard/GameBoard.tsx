@@ -65,7 +65,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
   // ─── Online room state ─────────────────────────────────
   const [roomId, setRoomId] = useState<string>(initialRoomId || "");
+  const roomIdRef = useRef<string>(initialRoomId || "");
   const [waiting, setWaiting] = useState(mode === "online");
+  const [roomCapacity, setRoomCapacity] = useState(playerCount);
   const [onlinePlayers, setOnlinePlayers] = useState<PlayerInfo[]>([]);
   const [isCreator, setIsCreator] = useState(false);
   const [myPlayerIndex, setMyPlayerIndex] = useState<number>(0);
@@ -76,6 +78,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const [newBoxes, setNewBoxes] = useState<string[]>([]);
   const prevScoresRef = useRef<number[]>([]);
   const prevBoxesRef = useRef<Record<string, number>>({});
+  const prevOnlineCountRef = useRef<number>(0);
 
   // ─── Build players array for local/AI ──────────────────
   const localPlayers: PlayerInfo[] = useMemo(() => {
@@ -108,6 +111,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
     () => localPlayers.map((p) => p.color),
     [localPlayers],
   );
+
+  useEffect(() => {
+    roomIdRef.current = roomId;
+  }, [roomId]);
 
   // ─── Detect new boxes for animation ────────────────────
   useEffect(() => {
@@ -189,6 +196,19 @@ const GameBoard: React.FC<GameBoardProps> = ({
   useEffect(() => {
     if (mode !== "online" || !socket) return;
 
+    const reconnectHandler = () => {
+      const targetRoomId = roomIdRef.current || initialRoomId;
+      if (!targetRoomId) return;
+
+      socket.emit("rejoinRoom", {
+        roomId: targetRoomId,
+        playerId: playerInfo.id,
+        playerInfo,
+      });
+    };
+
+    socket.on("connect", reconnectHandler);
+
     // Create or join room
     if (initialRoomId) {
       socket.emit("joinRoom", { roomId: initialRoomId, playerInfo });
@@ -203,6 +223,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
     socket.on("roomCreated", ({ roomId: newRoomId }: { roomId: string }) => {
       setRoomId(newRoomId);
       setIsCreator(true);
+      setRoomCapacity(playerCount);
     });
 
     socket.on(
@@ -211,21 +232,30 @@ const GameBoard: React.FC<GameBoardProps> = ({
         players,
         maxPlayers,
         creator,
+        started,
       }: {
         players: PlayerInfo[];
         maxPlayers: number;
         creator: string;
+        started?: boolean;
       }) => {
+        const previousCount = prevOnlineCountRef.current;
+        prevOnlineCountRef.current = players.length;
+
         setOnlinePlayers(players);
-        setIsCreator(socket.id === creator);
+        setRoomCapacity(maxPlayers);
+        setIsCreator(playerInfo.id === creator);
 
         // Find this player's index
         const idx = players.findIndex((p) => p.id === playerInfo.id);
         if (idx !== -1) setMyPlayerIndex(idx);
 
-        setWaiting(true);
-        setGameStarted(false);
-        playSound("playerJoin");
+        const roomStarted = Boolean(started);
+        setWaiting(!roomStarted);
+        setGameStarted(roomStarted);
+        if (players.length > previousCount) {
+          playSound("playerJoin");
+        }
       },
     );
 
@@ -238,6 +268,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
     socket.on("updateGame", ({ state: serverState }: { state: GameState }) => {
       setState(serverState);
+      if (serverState.started) {
+        setWaiting(false);
+        setGameStarted(true);
+      }
     });
 
     socket.on(
@@ -246,14 +280,20 @@ const GameBoard: React.FC<GameBoardProps> = ({
         state: serverState,
         winnerName,
         isDraw,
+        reason,
+        message,
       }: {
         state: GameState;
         winnerName: string | null;
         isDraw: boolean;
+        reason?: "normal" | "forfeit";
+        message?: string;
       }) => {
         setState(serverState);
         if (isDraw) {
           toast("It's a draw!", { icon: "🤝" });
+        } else if (reason === "forfeit") {
+          toast.success(message || `${winnerName} wins by forfeit.`);
         } else {
           toast.success(`${winnerName} wins!`);
         }
@@ -287,9 +327,20 @@ const GameBoard: React.FC<GameBoardProps> = ({
       },
     );
 
-    socket.on("error", ({ message }: { message: string }) => {
+    socket.on("error", ({ message, code }: { message: string; code?: string }) => {
       toast.error(message);
       playSound("error");
+
+      if (code === "SESSION_EXPIRED") {
+        const targetRoomId = roomIdRef.current || initialRoomId;
+        if (targetRoomId) {
+          socket.emit("rejoinRoom", {
+            roomId: targetRoomId,
+            playerId: playerInfo.id,
+            playerInfo,
+          });
+        }
+      }
     });
 
     socket.on("invalidMove", ({ message }: { message: string }) => {
@@ -297,7 +348,12 @@ const GameBoard: React.FC<GameBoardProps> = ({
       playSound("error");
     });
 
+    socket.on("playerForfeited", ({ message }: { message: string }) => {
+      toast(message, { icon: "⚠️" });
+    });
+
     return () => {
+      socket.off("connect", reconnectHandler);
       socket.off("roomCreated");
       socket.off("waitingForPlayers");
       socket.off("startGame");
@@ -307,6 +363,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
       socket.off("playerReconnected");
       socket.off("error");
       socket.off("invalidMove");
+      socket.off("playerForfeited");
     };
   }, [
     mode,
@@ -357,13 +414,21 @@ const GameBoard: React.FC<GameBoardProps> = ({
     if (state.gameOver) return false;
 
     if (mode === "online") {
+      if (!isConnected) return false;
       return state.currentPlayer === myPlayerIndex;
     }
     if (mode === "ai") {
       return state.currentPlayer === 0; // Human is always player 0
     }
     return true; // Local: all players can interact
-  }, [gameStarted, state.gameOver, state.currentPlayer, mode, myPlayerIndex]);
+  }, [
+    gameStarted,
+    state.gameOver,
+    state.currentPlayer,
+    mode,
+    myPlayerIndex,
+    isConnected,
+  ]);
 
   const totalLines = useMemo(() => totalPossibleLines(state.gridSize), [state.gridSize]);
   const movesRemaining = totalLines - state.lines.length;
@@ -374,8 +439,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
       <WaitingRoom
         roomId={roomId}
         players={onlinePlayers}
-        maxPlayers={playerCount}
+        maxPlayers={roomCapacity}
         isCreator={isCreator}
+        isConnected={isConnected}
         colors={[...PLAYER_COLORS]}
         onStartGame={handleStartGame}
         onBack={onBack}
@@ -418,8 +484,13 @@ const GameBoard: React.FC<GameBoardProps> = ({
         />
 
         {mode === "online" && roomId && (
-          <div className="room-id">
-            Room: <b>{roomId.slice(0, 8)}</b>
+          <div className="online-status-stack">
+            <div className="room-id">
+              Room: <b>{roomId.slice(0, 8)}</b>
+            </div>
+            <div className={`connection-pill ${isConnected ? "ok" : "bad"}`}>
+              {isConnected ? "Online" : "Reconnecting..."}
+            </div>
           </div>
         )}
       </div>

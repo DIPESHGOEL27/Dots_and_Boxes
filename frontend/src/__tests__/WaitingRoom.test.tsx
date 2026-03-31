@@ -19,6 +19,7 @@ describe("WaitingRoom", () => {
     players: mockPlayers,
     maxPlayers: 2,
     isCreator: false,
+    isConnected: true,
     colors: mockColors,
     onStartGame: jest.fn(),
     onBack: jest.fn(),
@@ -26,7 +27,7 @@ describe("WaitingRoom", () => {
 
   it("renders the room ID", () => {
     render(<WaitingRoom {...baseProps} />);
-    expect(screen.getByText("test-room-123")).toBeInTheDocument();
+    expect(screen.getByText("test-roo")).toBeInTheDocument();
   });
 
   it("shows player count", () => {
@@ -84,11 +85,30 @@ describe("WaitingRoom", () => {
         {...baseProps}
         players={twoPlayers}
         isCreator={true}
+        isConnected={true}
         onStartGame={onStartGame}
       />,
     );
     fireEvent.click(screen.getByText(/Start Game/));
     expect(onStartGame).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables start button when disconnected", () => {
+    const twoPlayers: PlayerInfo[] = [
+      { id: "1", name: "Alice", color: "#00bcd4", avatar: "🎮" },
+      { id: "2", name: "Bob", color: "#ff4081", avatar: "🎲" },
+    ];
+
+    render(
+      <WaitingRoom
+        {...baseProps}
+        players={twoPlayers}
+        isCreator={true}
+        isConnected={false}
+      />,
+    );
+
+    expect(screen.getByText(/Start Game/)).toBeDisabled();
   });
 
   it("shows hint for non-creator", () => {

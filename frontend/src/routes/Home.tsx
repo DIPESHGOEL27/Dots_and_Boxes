@@ -49,6 +49,27 @@ const Home: React.FC = () => {
     localStorage.setItem("dots-boxes-avatar", playerAvatar);
   }, [playerName, playerColor, playerAvatar]);
 
+  const extractRoomId = useCallback((input: string): string => {
+    const trimmed = input.trim();
+    if (!trimmed) return "";
+
+    try {
+      const parsed = new URL(trimmed);
+      const parts = parsed.pathname.split("/").filter(Boolean);
+      const onlineIndex = parts.findIndex((part) => part === "online");
+      if (onlineIndex !== -1 && parts[onlineIndex + 1]) {
+        return parts[onlineIndex + 1];
+      }
+      if (parts.length > 0) {
+        return parts[parts.length - 1];
+      }
+    } catch {
+      // Not a full URL, treat as raw room id.
+    }
+
+    return trimmed;
+  }, []);
+
   const handleStart = useCallback(() => {
     savePlayerPrefs();
 
@@ -70,7 +91,8 @@ const Home: React.FC = () => {
         break;
       case "online":
         if (joinRoomId.trim()) {
-          navigate(`/game/online/${joinRoomId.trim()}?${params.toString()}`);
+          const parsedRoomId = extractRoomId(joinRoomId);
+          navigate(`/game/online/${parsedRoomId}?${params.toString()}`);
         } else {
           navigate(`/game/online?${params.toString()}`);
         }
@@ -82,6 +104,7 @@ const Home: React.FC = () => {
     localPlayers,
     aiDifficulty,
     joinRoomId,
+    extractRoomId,
     playerName,
     playerColor,
     playerAvatar,

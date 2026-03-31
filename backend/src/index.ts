@@ -121,12 +121,59 @@ setInterval(() => {
   const expired = roomManager.checkReconnectionTimeouts();
   for (const { roomId, playerIndex } of expired) {
     const room = roomManager.getRoom(roomId);
-    if (room) {
-      io.to(roomId).emit("playerForfeited", {
-        playerIndex,
-        message: `Player ${playerIndex + 1} failed to reconnect within ${RECONNECT_TIMEOUT_SECONDS} seconds.`,
-      });
+    if (!room) continue;
+    if (!room.state.started || room.state.gameOver) continue;
+
+    const remainingIndices = room.players
+      .map((_, index) => index)
+      .filter((index) => index !== playerIndex);
+
+    let winner: number | null = null;
+    if (remainingIndices.length === 1) {
+      winner = remainingIndices[0];
+    } else if (remainingIndices.length > 1) {
+      let maxScore = Number.NEGATIVE_INFINITY;
+      let winners: number[] = [];
+
+      for (const index of remainingIndices) {
+        const score = room.state.scores[index] ?? 0;
+        if (score > maxScore) {
+          maxScore = score;
+          winners = [index];
+        } else if (score === maxScore) {
+          winners.push(index);
+        }
+      }
+
+      winner = winners.length === 1 ? winners[0] : null;
     }
+
+    const forfeitMessage =
+      `${room.players[playerIndex]?.name || `Player ${playerIndex + 1}`} ` +
+      `failed to reconnect within ${RECONNECT_TIMEOUT_SECONDS} seconds.`;
+
+    const finalState = {
+      ...room.state,
+      gameOver: true,
+      winner,
+      currentPlayer: winner ?? room.state.currentPlayer,
+    };
+
+    roomManager.updateState(roomId, finalState);
+
+    io.to(roomId).emit("gameOver", {
+      state: finalState,
+      winner,
+      winnerName: winner !== null ? room.players[winner]?.name || null : null,
+      isDraw: winner === null,
+      reason: "forfeit",
+      message: forfeitMessage,
+    });
+
+    io.to(roomId).emit("playerForfeited", {
+      playerIndex,
+      message: forfeitMessage,
+    });
   }
 }, 5000);
 
